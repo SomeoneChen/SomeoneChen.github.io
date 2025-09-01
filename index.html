@@ -1,0 +1,755 @@
+😋😋😋😋😋😋
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>实习打卡水印相机</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-color: #007aff;
+            --background-color: #1c1c1e;
+            --text-color: #ffffff;
+            --surface-color: #2c2c2e;
+            --button-hover: #0056b3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+        }
+
+        #permission-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+        }
+
+        #permission-screen h2 {
+            margin-bottom: 10px;
+        }
+
+        #permission-screen p {
+            margin-bottom: 20px;
+            color: #a0a0a0;
+        }
+
+        .tutorial-item {
+            display: flex;
+            align-items: flex-start;
+            text-align: left;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 350px;
+        }
+        .tutorial-item svg {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            margin-right: 15px;
+            fill: #a0a0a0;
+        }
+        .tutorial-item .step-text {
+            color: #e0e0e0;
+            line-height: 1.4;
+        }
+
+        #app-screen {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        #video {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #camera-error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            cursor: pointer;
+            padding: 20px;
+            color: #aaa;
+        }
+
+        #camera-error svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            fill: #777;
+        }
+
+        #watermark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 允许点击穿透 */
+            z-index: 10;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        .button, button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            -webkit-appearance: none;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #capture-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #fff;
+            border: 5px solid var(--primary-color);
+            padding: 0;
+        }
+
+        .icon-btn {
+            background-color: var(--surface-color);
+            padding: 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            transition: background-color 0.2s;
+        }
+
+        .icon-btn:hover {
+            background-color: #3f3f41;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: var(--surface-color);
+            padding: 15px;
+            border-radius: 12px;
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #preview-image {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--text-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <!-- 设置高德地图安全密钥和加载API -->
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '71b5ee377b7d68bf88df466de6ef72c9',
+        };
+    </script>
+    <!-- 增加 Geolocation 和 Geocoder 插件以实现定位和地址解析 -->
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=7fc18f454c40c665824234fb3a2b1113&plugin=AMap.Geolocation,AMap.Geocoder"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div id="permission-screen">
+            <h2>欢迎使用打卡相机</h2>
+            <p>请授予摄像头权限以开始拍照</p>
+            <div class="space-y-4 text-left p-4 rounded-lg bg-gray-800 border border-gray-700 max-w-sm w-full mx-auto mb-6">
+                <div class="tutorial-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"></path><path d="M14 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><path d="m17 12-2-2-2 2"></path><path d="m17 12 2-2 2 2"></path><path d="m7 12 2 2 2-2"></path><path d="m7 12-2 2-2-2"></path></svg>
+                    <div class="step-text">
+                        <span class="font-bold">切换镜头：</span>
+                        <span>如果你有多个摄像头，点击此按钮可以切换前后摄像头。</span>
+                    </div>
+                </div>
+                <div class="tutorial-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                    <div class="step-text">
+                        <span class="font-bold">获取定位：</span>
+                        <span>点击此按钮可以获取你的当前位置信息，并作为水印添加到照片上。</span>
+                        <br>
+                        <span class="text-xs text-gray-400">本功能使用高德地图SDK。</span>
+                    </div>
+                </div>
+                <div class="tutorial-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                    <div class="step-text">
+                        <span class="font-bold">水印显示：</span>
+                        <span>时间、日期、位置和水印名称将显示在照片下方居中位置。</span>
+                    </div>
+                </div>
+                <div class="tutorial-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                    <div class="step-text">
+                        <span class="font-bold">拍照按钮：</span>
+                        <span>中间的圆形大按钮，点击即可拍摄照片，并自动添加水印。</span>
+                    </div>
+                </div>
+            </div>
+            <button id="request-permission-btn" class="button">启动相机</button>
+        </div>
+
+        <div id="app-screen" class="hidden">
+            <div class="video-container">
+                <video id="video" playsinline autoplay muted></video>
+                <canvas id="watermark-overlay"></canvas>
+                <div id="camera-error" class="hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 12.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0-5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM10.5 2h3a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5ZM12 4a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-3Z"/><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H7v1.5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V3h2.5A2.5 2.5 0 0 1 22 5.5v13A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-13ZM20 5.5a.5.5 0 0 0-.5-.5h-15a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h15a.5.5 0 0 0 .5-.5v-13Z"/></svg>
+                    <p>摄像头权限获取失败<br>点击此处重试</p>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="getLocationBtn" class="icon-btn" title="获取位置">
+                    <div class="flex items-center justify-center h-full w-full">
+                         <svg id="location-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                         <div id="location-spinner" class="loading-spinner hidden"></div>
+                    </div>
+                </button>
+
+                <button id="capture-btn" title="拍照"></button>
+
+                <button id="switch-camera-btn" class="icon-btn" title="切换摄像头">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"></path><path d="M14 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><path d="m17 12-2-2-2 2"></path><path d="m17 12 2-2 2 2"></path><path d="m7 12 2 2 2-2"></path><path d="m7 12-2 2-2-2"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="preview-modal" class="modal hidden">
+        <div class="modal-content">
+            <img id="preview-image" alt="打卡照片预览">
+            <p id="wechat-save-tip" class="hidden text-gray-400 mt-2 text-sm">长按图片可保存</p>
+            <div class="modal-actions mt-4">
+                <button id="close-modal-btn" class="button">关闭</button>
+                <button id="clock-in-btn" class="button bg-green-500 hover:bg-green-600">打卡</button>
+                <a id="download-link" download><button class="button">下载图片</button></a>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageBox" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-xs text-center shadow-xl">
+            <h3 id="messageTitle" class="text-lg font-bold mb-2"></h3>
+            <p id="messageText" class="text-gray-700 mb-4"></p>
+            <button onclick="closeMessageBox()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full">
+                确定
+            </button>
+        </div>
+    </div>
+
+    <canvas id="photo-canvas" class="hidden"></canvas>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const permissionScreen = document.getElementById('permission-screen');
+            const appScreen = document.getElementById('app-screen');
+            const requestPermissionBtn = document.getElementById('request-permission-btn');
+
+            const video = document.getElementById('video');
+            const watermarkOverlay = document.getElementById('watermark-overlay');
+            const photoCanvas = document.getElementById('photo-canvas');
+            const cameraError = document.getElementById('camera-error');
+
+            const captureBtn = document.getElementById('capture-btn');
+            const getLocationBtn = document.getElementById('getLocationBtn');
+            const locationIcon = document.getElementById('location-icon');
+            const locationSpinner = document.getElementById('location-spinner');
+            const switchCameraBtn = document.getElementById('switch-camera-btn');
+
+            const previewModal = document.getElementById('preview-modal');
+            const previewImage = document.getElementById('preview-image');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const clockInBtn = document.getElementById('clock-in-btn');
+            const downloadLink = document.getElementById('download-link');
+            const wechatSaveTip = document.getElementById('wechat-save-tip');
+
+            const messageBox = document.getElementById('messageBox');
+            const messageTitle = document.getElementById('messageTitle');
+            const messageText = document.getElementById('messageText');
+
+            let currentStream;
+            let availableCameras = [];
+            let selectedDeviceId = null;
+            let watermarkTimer;
+
+            let locationInfo = {
+                text: '位置信息待获取',
+                lng: null,
+                lat: null,
+            };
+
+            const dayNames = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+
+            // 显示消息框
+            function showMessageBox(title, text) {
+                messageTitle.textContent = title;
+                messageText.textContent = text;
+                messageBox.classList.remove('hidden');
+                messageBox.classList.add('flex');
+            }
+
+            // 关闭消息框
+            window.closeMessageBox = function() {
+                messageBox.classList.remove('flex');
+                messageBox.classList.add('hidden');
+            }
+
+            // 存入 Cookie
+            function setCookie(name, value, days) {
+                const d = new Date();
+                d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+                const expires = "expires=" + d.toUTCString();
+                document.cookie = name + "=" + value + ";" + expires + ";path=/";
+            }
+
+            // 获取 Cookie
+            function getCookie(name) {
+                const cname = name + "=";
+                const decodedCookie = decodeURIComponent(document.cookie);
+                const ca = decodedCookie.split(';');
+                for(let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') {
+                        c = c.substring(1);
+                    }
+                    if (c.indexOf(cname) === 0) {
+                        return c.substring(cname.length, c.length);
+                    }
+                }
+                return "";
+            }
+
+            // 获取可用摄像头列表
+            async function getCameras() {
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    availableCameras = devices.filter(device => device.kind === 'videoinput');
+
+                    if (availableCameras.length > 1) {
+                        switchCameraBtn.classList.remove('hidden');
+                    } else {
+                        switchCameraBtn.classList.add('hidden');
+                    }
+
+                    const savedDeviceId = getCookie('selectedDeviceId');
+                    if (savedDeviceId && availableCameras.find(cam => cam.deviceId === savedDeviceId)) {
+                        selectedDeviceId = savedDeviceId;
+                    } else if (availableCameras.length > 0) {
+                        const backCamera = availableCameras.find(cam =>
+                            cam.label.toLowerCase().includes('back') ||
+                            cam.label.toLowerCase().includes('environment') ||
+                            cam.label.toLowerCase().includes('后置')
+                        );
+                        selectedDeviceId = backCamera ? backCamera.deviceId : availableCameras[0].deviceId;
+                    }
+                } catch (err) {
+                    console.error("无法获取设备列表:", err);
+                    switchCameraBtn.classList.add('hidden');
+                }
+            }
+
+            // 停止当前摄像头流
+            function stopCurrentStream() {
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+            }
+
+            // 启动摄像头
+            async function startCamera(deviceId = null) {
+                stopCurrentStream();
+                const constraints = {
+                    video: {
+                        deviceId: deviceId ? { exact: deviceId } : undefined,
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    video.srcObject = stream;
+                    currentStream = stream;
+
+                    let facingMode = 'unknown';
+                    const videoTrack = stream.getVideoTracks()[0];
+                    const settings = videoTrack.getSettings();
+                    facingMode = settings.facingMode || 'unknown';
+
+                    if (facingMode === 'unknown' && deviceId) {
+                        const device = availableCameras.find(cam => cam.deviceId === deviceId);
+                        if (device) {
+                            if (device.label.toLowerCase().includes('front') ||
+                                device.label.toLowerCase().includes('user') ||
+                                device.label.toLowerCase().includes('前置')) {
+                                facingMode = 'user';
+                            } else if (device.label.toLowerCase().includes('back') ||
+                                      device.label.toLowerCase().includes('environment') ||
+                                      device.label.toLowerCase().includes('后置')) {
+                                facingMode = 'environment';
+                            }
+                        }
+                    }
+
+                    video.style.transform = (facingMode === 'user') ? 'scaleX(-1)' : 'scaleX(1)';
+                    cameraError.classList.add('hidden');
+                    video.classList.remove('hidden');
+
+                    video.onloadedmetadata = () => {
+                      watermarkOverlay.width = video.offsetWidth;
+                      watermarkOverlay.height = video.offsetHeight;
+                      // 性能优化：将水印更新频率从 100ms 降低到 1000ms
+                      clearInterval(watermarkTimer);
+                      watermarkTimer = setInterval(drawRealtimeWatermark, 1000);
+                    };
+
+                } catch (err) {
+                    console.error("摄像头启动失败:", err);
+                    cameraError.classList.remove('hidden');
+                    video.classList.add('hidden');
+                }
+            }
+
+            // 自动换行函数，根据单词而非字符
+            function wrapText(context, text, x, y, maxWidth) {
+                const words = text.split('');
+                let line = '';
+                let lines = [];
+                for(let n = 0; n < words.length; n++) {
+                    let testLine = line + words[n];
+                    let metrics = context.measureText(testLine);
+                    let testWidth = metrics.width;
+                    if (testWidth > maxWidth && n > 0) {
+                        lines.push(line);
+                        line = words[n];
+                    } else {
+                        line = testLine;
+                    }
+                }
+                lines.push(line);
+
+                let textHeight = 0;
+                const lineHeight = 1.4 * context.measureText('M').width;
+                for (let i = 0; i < lines.length; i++) {
+                    const textY = y + i * lineHeight;
+                    context.strokeText(lines[i], x, textY);
+                    context.fillText(lines[i], x, textY);
+                    textHeight += lineHeight;
+                }
+                return textHeight;
+            }
+
+            // 在 Canvas 上绘制水印
+            function drawWatermark(ctx, canvasWidth, canvasHeight) {
+                const now = new Date();
+                const dateText = `${now.getFullYear()}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getDate().toString().padStart(2, '0')} ${dayNames[now.getDay()]}`;
+                const timeText = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                // 添加位置emoji
+                const locationText = `📍 ${locationInfo.text}`;
+                const brandText = "水印相机";
+
+                const paddingBottom = Math.max(20, canvasHeight * 0.05);
+                const paddingHorizontal = Math.max(10, canvasWidth * 0.03);
+                const maxWidth = canvasWidth - 2 * paddingHorizontal;
+
+                // 根据图片高度动态调整字体大小
+                const baseFontSize = Math.max(18, Math.floor(canvasHeight / 25));
+                const timeFontSize = baseFontSize * 1.8;
+                const dateFontSize = baseFontSize;
+                const locationFontSize = baseFontSize * 0.9;
+                const brandFontSize = baseFontSize * 0.6;
+                const spacing = baseFontSize * 0.8; // 行间距
+
+                // 统一设置文本样式
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
+                ctx.lineJoin = 'round';
+                
+                let currentY = canvasHeight - paddingBottom;
+                
+                // 绘制品牌水印（右下角）
+                ctx.textAlign = 'right';
+                ctx.font = `bold ${brandFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                ctx.strokeText(brandText, canvasWidth - paddingHorizontal, currentY);
+                ctx.fillText(brandText, canvasWidth - paddingHorizontal, currentY);
+
+                // 调整位置以便绘制居中文本
+                currentY -= spacing + brandFontSize;
+                
+                // 绘制位置信息
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.font = `${locationFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                const locationLinesHeight = wrapText(ctx, locationText, canvasWidth / 2, currentY, maxWidth);
+                currentY -= locationLinesHeight + spacing;
+
+                // 绘制日期
+                ctx.font = `bold ${dateFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                ctx.strokeText(dateText, canvasWidth / 2, currentY);
+                ctx.fillText(dateText, canvasWidth / 2, currentY);
+                currentY -= (dateFontSize * 0.8) + spacing;
+
+                // 绘制时间
+                ctx.font = `bold ${timeFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                ctx.strokeText(timeText, canvasWidth / 2, currentY);
+                ctx.fillText(timeText, canvasWidth / 2, currentY);
+            }
+
+            // 实时绘制水印，用于预览
+            function drawRealtimeWatermark() {
+                const ctx = watermarkOverlay.getContext('2d');
+                ctx.clearRect(0, 0, watermarkOverlay.width, watermarkOverlay.height);
+                drawWatermark(ctx, watermarkOverlay.width, watermarkOverlay.height);
+            }
+
+            // 处理图片（拍照或从图库选择）
+            function processImage(sourceElement) {
+                const ctx = photoCanvas.getContext('2d');
+                const isVideo = sourceElement.tagName === 'VIDEO';
+
+                const sourceWidth = isVideo ? sourceElement.videoWidth : sourceElement.naturalWidth;
+                const sourceHeight = isVideo ? sourceElement.videoHeight : sourceElement.naturalHeight;
+
+                photoCanvas.width = sourceWidth;
+                photoCanvas.height = sourceHeight;
+
+                let facingMode = 'unknown';
+                if (currentStream) {
+                    const videoTrack = currentStream.getVideoTracks()[0];
+                    const settings = videoTrack.getSettings();
+                    facingMode = settings.facingMode || 'unknown';
+                }
+
+                if (isVideo && facingMode === 'user') {
+                     ctx.translate(photoCanvas.width, 0);
+                     ctx.scale(-1, 1);
+                }
+
+                ctx.drawImage(sourceElement, 0, 0, photoCanvas.width, photoCanvas.height);
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+                drawWatermark(ctx, photoCanvas.width, photoCanvas.height);
+
+                const dataUrl = photoCanvas.toDataURL('image/jpeg', 0.9);
+                previewImage.src = dataUrl;
+                downloadLink.href = dataUrl;
+                const timestamp = new Date();
+                const filename = `实习打卡_${timestamp.getFullYear()}-${(timestamp.getMonth() + 1).toString().padStart(2, '0')}-${timestamp.getDate().toString().padStart(2, '0')}.jpg`;
+                downloadLink.download = filename;
+
+                const isWeChat = navigator.userAgent.toLowerCase().includes('micromessenger');
+                if (isWeChat) {
+                    downloadLink.classList.add('hidden');
+                    wechatSaveTip.classList.remove('hidden');
+                } else {
+                    downloadLink.classList.remove('hidden');
+                    wechatSaveTip.classList.add('hidden');
+                }
+
+                previewModal.classList.remove('hidden');
+                clearInterval(watermarkTimer);
+                stopCurrentStream();
+            }
+
+            // 启动定位服务并更新 UI
+            function startLocationLookup(retryCount = 0) {
+                locationInfo.text = '正在定位...';
+                drawRealtimeWatermark(); // 立即更新UI显示“正在定位...”
+                getLocationBtn.disabled = true;
+                locationIcon.classList.add('hidden');
+                locationSpinner.classList.remove('hidden');
+
+
+                const geolocator = new AMap.Geolocation({
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                });
+
+                geolocator.getCurrentPosition((status, result) => {
+                    getLocationBtn.disabled = false;
+                    locationIcon.classList.remove('hidden');
+                    locationSpinner.classList.add('hidden');
+
+                    if (status === 'complete') {
+                        const pos = result.position;
+                        locationInfo.lng = pos.lng;
+                        locationInfo.lat = pos.lat;
+
+                        const geocoder = new AMap.Geocoder();
+                        geocoder.getAddress(pos, (status, geocodeResult) => {
+                            if (status === 'complete' && geocodeResult.regeocode) {
+                                locationInfo.text = geocodeResult.regeocode.formattedAddress;
+                                showMessageBox('定位成功', `已获取位置：${locationInfo.text}`);
+                            } else {
+                                locationInfo.text = `无法解析地址`;
+                                showMessageBox('定位成功（部分）', '已获取经纬度，但无法解析详细地址。');
+                            }
+                            drawRealtimeWatermark();
+                        });
+                    } else {
+                        const errorMsg = '无法获取您的位置信息，请检查网络和浏览器权限。';
+                        if (retryCount < 2) {
+                            setTimeout(() => startLocationLookup(retryCount + 1), 2000);
+                            locationInfo.text = `定位失败，正在重试...（${retryCount + 1}/3）`;
+                            drawRealtimeWatermark();
+                        } else {
+                            locationInfo.text = `定位失败`;
+                            locationInfo.lng = null;
+                            locationInfo.lat = null;
+                            showMessageBox('定位失败', '已达到最大重试次数。请检查网络和权限后重试。');
+                            drawRealtimeWatermark();
+                        }
+                    }
+                });
+            }
+
+            // 事件监听
+            requestPermissionBtn.addEventListener('click', async () => {
+                permissionScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+                await getCameras();
+                startCamera(selectedDeviceId);
+            });
+
+            cameraError.addEventListener('click', () => {
+                startCamera(selectedDeviceId);
+            });
+
+            captureBtn.addEventListener('click', () => {
+                if (currentStream && currentStream.active) {
+                    processImage(video);
+                } else {
+                    showMessageBox('错误', '摄像头未启动或无权限，请重试。');
+                }
+            });
+
+            getLocationBtn.addEventListener('click', () => {
+                startLocationLookup();
+            });
+
+            switchCameraBtn.addEventListener('click', async () => {
+                if (availableCameras.length <= 1) return;
+
+                const currentIndex = availableCameras.findIndex(cam => cam.deviceId === selectedDeviceId);
+                const nextIndex = (currentIndex + 1) % availableCameras.length;
+                selectedDeviceId = availableCameras[nextIndex].deviceId;
+                setCookie('selectedDeviceId', selectedDeviceId, 365);
+                startCamera(selectedDeviceId);
+            });
+
+            closeModalBtn.addEventListener('click', () => {
+                previewModal.classList.add('hidden');
+                startCamera(selectedDeviceId);
+            });
+            
+            // 打卡按钮，注意此处的 URL 是一个占位符，请根据您的实际需求修改
+            clockInBtn.addEventListener('click', () => {
+                window.location.href = 'http://nxjy.nhedu.net/student/';
+            });
+        });
+    </script>
+</body>
+</html>
+
