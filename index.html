@@ -395,7 +395,7 @@
             let watermarkTimer;
 
             let locationInfo = {
-                text: '位置信息待获取',
+                text: null,
                 lng: null,
                 lat: null,
             };
@@ -457,6 +457,7 @@
                     if (savedDeviceId && availableCameras.find(cam => cam.deviceId === savedDeviceId)) {
                         selectedDeviceId = savedDeviceId;
                     } else if (availableCameras.length > 0) {
+                        // 优先查找后置摄像头
                         const backCamera = availableCameras.find(cam => 
                             cam.label.toLowerCase().includes('back') || 
                             cam.label.toLowerCase().includes('environment') || 
@@ -489,7 +490,7 @@
                 };
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    // 修复 bug: 成功获取流之后再次检查设备列表，确保切换按钮显示
+                    // 成功获取流之后再次检查设备列表，确保切换按钮显示
                     await getCameras();
                     
                     video.srcObject = stream;
@@ -631,9 +632,7 @@
                 const now = new Date();
                 const dateText = `${now.getFullYear()}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getDate().toString().padStart(2, '0')} ${dayNames[now.getDay()]}`;
                 const timeText = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-                // 添加位置emoji
-                const locationText = `📍 ${locationInfo.text}`;
-
+                
                 const paddingBottom = Math.max(20, canvasHeight * 0.05);
                 const paddingHorizontal = Math.max(10, canvasWidth * 0.03);
                 const maxWidth = canvasWidth - 2 * paddingHorizontal;
@@ -643,31 +642,42 @@
                 const timeFontSize = baseFontSize * 1.8;
                 const dateFontSize = baseFontSize;
                 const locationFontSize = baseFontSize * 0.9;
+                const coordsFontSize = baseFontSize * 0.8;
                 const spacing = baseFontSize * 0.8; // 行间距
 
-                // 统一设置文本样式
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 ctx.fillStyle = 'white';
                 ctx.strokeStyle = 'black';
                 ctx.lineWidth = 2;
                 ctx.lineJoin = 'round';
+                
                 let currentY = canvasHeight - paddingBottom;
-
-                // 调整位置以便绘制居中文本
-                // 绘制位置信息
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.font = `${locationFontSize}px "Helvetica Neue", Arial, sans-serif`;
-                const locationLinesHeight = wrapText(ctx, locationText, canvasWidth / 2, currentY, maxWidth);
-                currentY -= locationLinesHeight + spacing;
-
+                let textHeight = 0;
+                
+                // 仅在成功获取位置信息后显示相关内容
+                if (locationInfo.lng !== null && locationInfo.lat !== null) {
+                    const coordsText = `经度: ${locationInfo.lng.toFixed(6)} 纬度: ${locationInfo.lat.toFixed(6)}`;
+                    
+                    ctx.font = `${coordsFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                    ctx.strokeText(coordsText, canvasWidth / 2, currentY);
+                    ctx.fillText(coordsText, canvasWidth / 2, currentY);
+                    textHeight += coordsFontSize * 1.4 + spacing;
+                    
+                    const locationText = `📍 ${locationInfo.text}`;
+                    ctx.font = `${locationFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                    const locationLineHeight = wrapText(ctx, locationText, canvasWidth / 2, currentY - coordsFontSize * 1.4 - spacing, maxWidth);
+                    textHeight += locationLineHeight + spacing;
+                }
+                
+                currentY -= textHeight;
+                
                 // 绘制日期
                 ctx.font = `bold ${dateFontSize}px "Helvetica Neue", Arial, sans-serif`;
                 ctx.strokeText(dateText, canvasWidth / 2, currentY);
                 ctx.fillText(dateText, canvasWidth / 2, currentY);
                 currentY -= (dateFontSize * 0.8) + spacing;
-
+                
                 // 绘制时间
                 ctx.font = `bold ${timeFontSize}px "Helvetica Neue", Arial, sans-serif`;
                 ctx.strokeText(timeText, canvasWidth / 2, currentY);
@@ -735,6 +745,8 @@
             // 启动定位服务并更新 UI
             function startLocationLookup(retryCount = 0) {
                 locationInfo.text = '正在定位...';
+                locationInfo.lng = null;
+                locationInfo.lat = null;
                 drawRealtimeWatermark(); // 立即更新UI显示"正在定位..."
                 getLocationBtn.disabled = true;
                 locationIcon.classList.add('hidden');
@@ -770,12 +782,8 @@
                         geocoder.getAddress(pos, (status, geocodeResult) => {
                             if (status === 'complete' && geocodeResult.regeocode) {
                                 locationInfo.text = geocodeResult.regeocode.formattedAddress;
-                                // 移除成功获取定位时的弹窗
-                                // showMessageBox('定位成功', `已获取位置：${locationInfo.text}`);
                             } else {
                                 locationInfo.text = `无法解析地址`;
-                                // 移除成功获取定位时的弹窗
-                                // showMessageBox('定位成功（部分）', '已获取经纬度，但无法解析详细地址。');
                             }
                             drawRealtimeWatermark();
                         });
@@ -795,11 +803,10 @@
                         
                         if (retryCount < 2) {
                             setTimeout(() => startLocationLookup(retryCount + 1), 2000);
-                            // 修复 bug: 增加重试次数的清晰提示
                             locationInfo.text = `定位失败，正在重试...（${retryCount + 1}/3）`;
                             drawRealtimeWatermark();
                         } else {
-                            locationInfo.text = `定位失败`;
+                            locationInfo.text = null;
                             locationInfo.lng = null;
                             locationInfo.lat = null;
                             showMessageBox('定位失败', `${userMessage} 已达到最大重试次数。`);
@@ -813,7 +820,6 @@
             requestPermissionBtn.addEventListener('click', async () => {
                 permissionScreen.classList.add('hidden');
                 appScreen.classList.remove('hidden');
-                // 修复 bug: 启动摄像头时再获取设备列表
                 await getCameras();
                 startCamera(selectedDeviceId);
             });
