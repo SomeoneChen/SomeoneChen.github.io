@@ -1,19 +1,10 @@
-😋😋😋😋😋😋
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>实习打卡水印相机</title>
-    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "t3x1yhhicy");
-    </script>
     <style>
         :root {
             --primary-color: #007aff;
@@ -75,6 +66,7 @@
             width: 100%;
             max-width: 350px;
         }
+
         .tutorial-item svg {
             flex-shrink: 0;
             width: 30px;
@@ -82,6 +74,7 @@
             margin-right: 15px;
             fill: #a0a0a0;
         }
+
         .tutorial-item .step-text {
             color: #e0e0e0;
             line-height: 1.4;
@@ -138,7 +131,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* 允许点击穿透 */
+            pointer-events: none;
             z-index: 10;
         }
 
@@ -241,22 +234,42 @@
             height: 24px;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* 斜45度水印样式 */
+        .diagonal-watermark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0.5;
+            overflow: hidden;
+        }
+
+        .watermark-text {
+            position: absolute;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            transform: rotate(-45deg);
+            white-space: nowrap;
+        }
     </style>
-    <!-- 设置高德地图安全密钥和加载API -->
     <script type="text/javascript">
         window._AMapSecurityConfig = {
             securityJsCode: '71b5ee377b7d68bf88df466de6ef72c9',
         };
     </script>
-    <!-- 增加 Geolocation 和 Geocoder 插件以实现定位和地址解析 -->
     <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=7fc18f454c40c665824234fb3a2b1113&plugin=AMap.Geolocation,AMap.Geocoder"></script>
 </head>
 <body>
-
     <div class="container">
         <div id="permission-screen">
             <h2>欢迎使用打卡相机</h2>
@@ -299,6 +312,7 @@
         <div id="app-screen" class="hidden">
             <div class="video-container">
                 <video id="video" playsinline autoplay muted></video>
+                <div id="diagonal-watermark" class="diagonal-watermark"></div>
                 <canvas id="watermark-overlay"></canvas>
                 <div id="camera-error" class="hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 12.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0-5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM10.5 2h3a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5ZM12 4a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-3Z"/><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H7v1.5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V3h2.5A2.5 2.5 0 0 1 22 5.5v13A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-13ZM20 5.5a.5.5 0 0 0-.5-.5h-15a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h15a.5.5 0 0 0 .5-.5v-13Z"/></svg>
@@ -308,8 +322,8 @@
             <div class="controls">
                 <button id="getLocationBtn" class="icon-btn" title="获取位置">
                     <div class="flex items-center justify-center h-full w-full">
-                         <svg id="location-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
-                         <div id="location-spinner" class="loading-spinner hidden"></div>
+                        <svg id="location-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+                        <div id="location-spinner" class="loading-spinner hidden"></div>
                     </div>
                 </button>
 
@@ -354,6 +368,7 @@
 
             const video = document.getElementById('video');
             const watermarkOverlay = document.getElementById('watermark-overlay');
+            const diagonalWatermark = document.getElementById('diagonal-watermark');
             const photoCanvas = document.getElementById('photo-canvas');
             const cameraError = document.getElementById('camera-error');
 
@@ -442,9 +457,9 @@
                     if (savedDeviceId && availableCameras.find(cam => cam.deviceId === savedDeviceId)) {
                         selectedDeviceId = savedDeviceId;
                     } else if (availableCameras.length > 0) {
-                        const backCamera = availableCameras.find(cam =>
-                            cam.label.toLowerCase().includes('back') ||
-                            cam.label.toLowerCase().includes('environment') ||
+                        const backCamera = availableCameras.find(cam => 
+                            cam.label.toLowerCase().includes('back') || 
+                            cam.label.toLowerCase().includes('environment') || 
                             cam.label.toLowerCase().includes('后置')
                         );
                         selectedDeviceId = backCamera ? backCamera.deviceId : availableCameras[0].deviceId;
@@ -474,289 +489,5 @@
                 };
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    video.srcObject = stream;
-                    currentStream = stream;
-
-                    let facingMode = 'unknown';
-                    const videoTrack = stream.getVideoTracks()[0];
-                    const settings = videoTrack.getSettings();
-                    facingMode = settings.facingMode || 'unknown';
-
-                    if (facingMode === 'unknown' && deviceId) {
-                        const device = availableCameras.find(cam => cam.deviceId === deviceId);
-                        if (device) {
-                            if (device.label.toLowerCase().includes('front') ||
-                                device.label.toLowerCase().includes('user') ||
-                                device.label.toLowerCase().includes('前置')) {
-                                facingMode = 'user';
-                            } else if (device.label.toLowerCase().includes('back') ||
-                                      device.label.toLowerCase().includes('environment') ||
-                                      device.label.toLowerCase().includes('后置')) {
-                                facingMode = 'environment';
-                            }
-                        }
-                    }
-
-                    video.style.transform = (facingMode === 'user') ? 'scaleX(-1)' : 'scaleX(1)';
-                    cameraError.classList.add('hidden');
-                    video.classList.remove('hidden');
-
-                    video.onloadedmetadata = () => {
-                      watermarkOverlay.width = video.offsetWidth;
-                      watermarkOverlay.height = video.offsetHeight;
-                      // 性能优化：将水印更新频率从 100ms 降低到 1000ms
-                      clearInterval(watermarkTimer);
-                      watermarkTimer = setInterval(drawRealtimeWatermark, 1000);
-                    };
-
-                } catch (err) {
-                    console.error("摄像头启动失败:", err);
-                    cameraError.classList.remove('hidden');
-                    video.classList.add('hidden');
-                }
-            }
-
-            // 自动换行函数，根据单词而非字符
-            function wrapText(context, text, x, y, maxWidth) {
-                const words = text.split('');
-                let line = '';
-                let lines = [];
-                for(let n = 0; n < words.length; n++) {
-                    let testLine = line + words[n];
-                    let metrics = context.measureText(testLine);
-                    let testWidth = metrics.width;
-                    if (testWidth > maxWidth && n > 0) {
-                        lines.push(line);
-                        line = words[n];
-                    } else {
-                        line = testLine;
-                    }
-                }
-                lines.push(line);
-
-                let textHeight = 0;
-                const lineHeight = 1.4 * context.measureText('M').width;
-                for (let i = 0; i < lines.length; i++) {
-                    const textY = y + i * lineHeight;
-                    context.strokeText(lines[i], x, textY);
-                    context.fillText(lines[i], x, textY);
-                    textHeight += lineHeight;
-                }
-                return textHeight;
-            }
-
-            // 在 Canvas 上绘制水印
-            function drawWatermark(ctx, canvasWidth, canvasHeight) {
-                const now = new Date();
-                const dateText = `${now.getFullYear()}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getDate().toString().padStart(2, '0')} ${dayNames[now.getDay()]}`;
-                const timeText = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-                // 添加位置emoji
-                const locationText = `📍 ${locationInfo.text}`;
-                const brandText = "水印相机";
-
-                const paddingBottom = Math.max(20, canvasHeight * 0.05);
-                const paddingHorizontal = Math.max(10, canvasWidth * 0.03);
-                const maxWidth = canvasWidth - 2 * paddingHorizontal;
-
-                // 根据图片高度动态调整字体大小
-                const baseFontSize = Math.max(18, Math.floor(canvasHeight / 25));
-                const timeFontSize = baseFontSize * 1.8;
-                const dateFontSize = baseFontSize;
-                const locationFontSize = baseFontSize * 0.9;
-                const brandFontSize = baseFontSize * 0.6;
-                const spacing = baseFontSize * 0.8; // 行间距
-
-                // 统一设置文本样式
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillStyle = 'white';
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 2;
-                ctx.lineJoin = 'round';
-                
-                let currentY = canvasHeight - paddingBottom;
-                
-                // 绘制品牌水印（右下角）
-                ctx.textAlign = 'right';
-                ctx.font = `bold ${brandFontSize}px "Helvetica Neue", Arial, sans-serif`;
-                ctx.strokeText(brandText, canvasWidth - paddingHorizontal, currentY);
-                ctx.fillText(brandText, canvasWidth - paddingHorizontal, currentY);
-
-                // 调整位置以便绘制居中文本
-                currentY -= spacing + brandFontSize;
-                
-                // 绘制位置信息
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.font = `${locationFontSize}px "Helvetica Neue", Arial, sans-serif`;
-                const locationLinesHeight = wrapText(ctx, locationText, canvasWidth / 2, currentY, maxWidth);
-                currentY -= locationLinesHeight + spacing;
-
-                // 绘制日期
-                ctx.font = `bold ${dateFontSize}px "Helvetica Neue", Arial, sans-serif`;
-                ctx.strokeText(dateText, canvasWidth / 2, currentY);
-                ctx.fillText(dateText, canvasWidth / 2, currentY);
-                currentY -= (dateFontSize * 0.8) + spacing;
-
-                // 绘制时间
-                ctx.font = `bold ${timeFontSize}px "Helvetica Neue", Arial, sans-serif`;
-                ctx.strokeText(timeText, canvasWidth / 2, currentY);
-                ctx.fillText(timeText, canvasWidth / 2, currentY);
-            }
-
-            // 实时绘制水印，用于预览
-            function drawRealtimeWatermark() {
-                const ctx = watermarkOverlay.getContext('2d');
-                ctx.clearRect(0, 0, watermarkOverlay.width, watermarkOverlay.height);
-                drawWatermark(ctx, watermarkOverlay.width, watermarkOverlay.height);
-            }
-
-            // 处理图片（拍照或从图库选择）
-            function processImage(sourceElement) {
-                const ctx = photoCanvas.getContext('2d');
-                const isVideo = sourceElement.tagName === 'VIDEO';
-
-                const sourceWidth = isVideo ? sourceElement.videoWidth : sourceElement.naturalWidth;
-                const sourceHeight = isVideo ? sourceElement.videoHeight : sourceElement.naturalHeight;
-
-                photoCanvas.width = sourceWidth;
-                photoCanvas.height = sourceHeight;
-
-                let facingMode = 'unknown';
-                if (currentStream) {
-                    const videoTrack = currentStream.getVideoTracks()[0];
-                    const settings = videoTrack.getSettings();
-                    facingMode = settings.facingMode || 'unknown';
-                }
-
-                if (isVideo && facingMode === 'user') {
-                     ctx.translate(photoCanvas.width, 0);
-                     ctx.scale(-1, 1);
-                }
-
-                ctx.drawImage(sourceElement, 0, 0, photoCanvas.width, photoCanvas.height);
-                ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-                drawWatermark(ctx, photoCanvas.width, photoCanvas.height);
-
-                const dataUrl = photoCanvas.toDataURL('image/jpeg', 0.9);
-                previewImage.src = dataUrl;
-                downloadLink.href = dataUrl;
-                const timestamp = new Date();
-                const filename = `实习打卡_${timestamp.getFullYear()}-${(timestamp.getMonth() + 1).toString().padStart(2, '0')}-${timestamp.getDate().toString().padStart(2, '0')}.jpg`;
-                downloadLink.download = filename;
-
-                const isWeChat = navigator.userAgent.toLowerCase().includes('micromessenger');
-                if (isWeChat) {
-                    downloadLink.classList.add('hidden');
-                    wechatSaveTip.classList.remove('hidden');
-                } else {
-                    downloadLink.classList.remove('hidden');
-                    wechatSaveTip.classList.add('hidden');
-                }
-
-                previewModal.classList.remove('hidden');
-                clearInterval(watermarkTimer);
-                stopCurrentStream();
-            }
-
-            // 启动定位服务并更新 UI
-            function startLocationLookup(retryCount = 0) {
-                locationInfo.text = '正在定位...';
-                drawRealtimeWatermark(); // 立即更新UI显示“正在定位...”
-                getLocationBtn.disabled = true;
-                locationIcon.classList.add('hidden');
-                locationSpinner.classList.remove('hidden');
-
-
-                const geolocator = new AMap.Geolocation({
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                });
-
-                geolocator.getCurrentPosition((status, result) => {
-                    getLocationBtn.disabled = false;
-                    locationIcon.classList.remove('hidden');
-                    locationSpinner.classList.add('hidden');
-
-                    if (status === 'complete') {
-                        const pos = result.position;
-                        locationInfo.lng = pos.lng;
-                        locationInfo.lat = pos.lat;
-
-                        const geocoder = new AMap.Geocoder();
-                        geocoder.getAddress(pos, (status, geocodeResult) => {
-                            if (status === 'complete' && geocodeResult.regeocode) {
-                                locationInfo.text = geocodeResult.regeocode.formattedAddress;
-                                showMessageBox('定位成功', `已获取位置：${locationInfo.text}`);
-                            } else {
-                                locationInfo.text = `无法解析地址`;
-                                showMessageBox('定位成功（部分）', '已获取经纬度，但无法解析详细地址。');
-                            }
-                            drawRealtimeWatermark();
-                        });
-                    } else {
-                        const errorMsg = '无法获取您的位置信息，请检查网络和浏览器权限。';
-                        if (retryCount < 2) {
-                            setTimeout(() => startLocationLookup(retryCount + 1), 2000);
-                            locationInfo.text = `定位失败，正在重试...（${retryCount + 1}/3）`;
-                            drawRealtimeWatermark();
-                        } else {
-                            locationInfo.text = `定位失败`;
-                            locationInfo.lng = null;
-                            locationInfo.lat = null;
-                            showMessageBox('定位失败', '已达到最大重试次数。请检查网络和权限后重试。');
-                            drawRealtimeWatermark();
-                        }
-                    }
-                });
-            }
-
-            // 事件监听
-            requestPermissionBtn.addEventListener('click', async () => {
-                permissionScreen.classList.add('hidden');
-                appScreen.classList.remove('hidden');
-                await getCameras();
-                startCamera(selectedDeviceId);
-            });
-
-            cameraError.addEventListener('click', () => {
-                startCamera(selectedDeviceId);
-            });
-
-            captureBtn.addEventListener('click', () => {
-                if (currentStream && currentStream.active) {
-                    processImage(video);
-                } else {
-                    showMessageBox('错误', '摄像头未启动或无权限，请重试。');
-                }
-            });
-
-            getLocationBtn.addEventListener('click', () => {
-                startLocationLookup();
-            });
-
-            switchCameraBtn.addEventListener('click', async () => {
-                if (availableCameras.length <= 1) return;
-
-                const currentIndex = availableCameras.findIndex(cam => cam.deviceId === selectedDeviceId);
-                const nextIndex = (currentIndex + 1) % availableCameras.length;
-                selectedDeviceId = availableCameras[nextIndex].deviceId;
-                setCookie('selectedDeviceId', selectedDeviceId, 365);
-                startCamera(selectedDeviceId);
-            });
-
-            closeModalBtn.addEventListener('click', () => {
-                previewModal.classList.add('hidden');
-                startCamera(selectedDeviceId);
-            });
-            
-            // 打卡按钮，注意此处的 URL 是一个占位符，请根据您的实际需求修改
-            clockInBtn.addEventListener('click', () => {
-                window.location.href = 'http://nxjy.nhedu.net/student/';
-            });
-        });
-    </script>
-</body>
-</html>
-
+                    // 修复 bug: 成功获取流之后再次检查设备列表，确保切换按钮显示
+                    await getCameras()
