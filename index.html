@@ -770,10 +770,12 @@
                         geocoder.getAddress(pos, (status, geocodeResult) => {
                             if (status === 'complete' && geocodeResult.regeocode) {
                                 locationInfo.text = geocodeResult.regeocode.formattedAddress;
-                                showMessageBox('定位成功', `已获取位置：${locationInfo.text}`);
+                                // 移除成功获取定位时的弹窗
+                                // showMessageBox('定位成功', `已获取位置：${locationInfo.text}`);
                             } else {
                                 locationInfo.text = `无法解析地址`;
-                                showMessageBox('定位成功（部分）', '已获取经纬度，但无法解析详细地址。');
+                                // 移除成功获取定位时的弹窗
+                                // showMessageBox('定位成功（部分）', '已获取经纬度，但无法解析详细地址。');
                             }
                             drawRealtimeWatermark();
                         });
