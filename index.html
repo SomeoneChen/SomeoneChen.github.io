@@ -490,4 +490,369 @@
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     // 修复 bug: 成功获取流之后再次检查设备列表，确保切换按钮显示
-                    await getCameras()
+                    await getCameras();
+                    
+                    video.srcObject = stream;
+                    currentStream = stream;
+
+                    let facingMode = 'unknown';
+                    const videoTrack = stream.getVideoTracks()[0];
+                    const settings = videoTrack.getSettings();
+                    facingMode = settings.facingMode || 'unknown';
+
+                    if (facingMode === 'unknown' && deviceId) {
+                        const device = availableCameras.find(cam => cam.deviceId === deviceId);
+                        if (device) {
+                            if (device.label.toLowerCase().includes('front') || 
+                                device.label.toLowerCase().includes('user') || 
+                                device.label.toLowerCase().includes('前置')) {
+                                facingMode = 'user';
+                            } else if (device.label.toLowerCase().includes('back') || 
+                                       device.label.toLowerCase().includes('environment') || 
+                                       device.label.toLowerCase().includes('后置')) {
+                                facingMode = 'environment';
+                            }
+                        }
+                    }
+
+                    video.style.transform = (facingMode === 'user') ? 'scaleX(-1)' : 'scaleX(1)';
+                    cameraError.classList.add('hidden');
+                    video.classList.remove('hidden');
+
+                    video.onloadedmetadata = () => {
+                        watermarkOverlay.width = video.offsetWidth;
+                        watermarkOverlay.height = video.offsetHeight;
+                        // 性能优化：将水印更新频率从 100ms 降低到 1000ms
+                        clearInterval(watermarkTimer);
+                        watermarkTimer = setInterval(drawRealtimeWatermark, 1000);
+                        
+                        // 创建斜角水印
+                        createDiagonalWatermark();
+                    };
+
+                } catch (err) {
+                    console.error("摄像头启动失败:", err);
+                    cameraError.classList.remove('hidden');
+                    video.classList.add('hidden');
+                }
+            }
+
+            // 创建斜角水印（DOM元素）
+            function createDiagonalWatermark() {
+                diagonalWatermark.innerHTML = '';
+                
+                const watermarkText = "水印相机";
+                const containerWidth = diagonalWatermark.offsetWidth;
+                const containerHeight = diagonalWatermark.offsetHeight;
+                
+                const diagonalLength = Math.sqrt(containerWidth * containerWidth + containerHeight * containerHeight);
+                const spacing = 120;
+                
+                const numWatermarksX = Math.ceil(diagonalLength / spacing) + 2;
+                const numWatermarksY = Math.ceil(diagonalLength / spacing) + 2;
+                
+                for (let i = -numWatermarksX; i < numWatermarksX; i++) {
+                    for (let j = -numWatermarksY; j < numWatermarksY; j++) {
+                        const watermark = document.createElement('div');
+                        watermark.className = 'watermark-text';
+                        watermark.textContent = watermarkText;
+                        
+                        const x = i * spacing;
+                        const y = j * spacing;
+                        
+                        watermark.style.left = `${x}px`;
+                        watermark.style.top = `${y}px`;
+                        
+                        diagonalWatermark.appendChild(watermark);
+                    }
+                }
+            }
+
+            // 在 Canvas 上绘制斜向水印
+            function drawDiagonalWatermarkOnCanvas(ctx, canvasWidth, canvasHeight) {
+                const watermarkText = "水印相机";
+                // 动态计算水印字体大小和间距，使其在高清图片上也能保持合适比例
+                const watermarkFontSize = Math.max(48, Math.floor(canvasHeight / 25));
+                const spacing = watermarkFontSize * 5;
+
+                ctx.save();
+                ctx.globalAlpha = 0.5; // 设置透明度
+                ctx.font = `bold ${watermarkFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // 旋转画布
+                ctx.translate(canvasWidth / 2, canvasHeight / 2);
+                ctx.rotate(-45 * Math.PI / 180);
+                ctx.translate(-canvasWidth / 2, -canvasHeight / 2);
+
+                // 绘制循环
+                for (let y = -canvasHeight; y < canvasHeight * 2; y += spacing) {
+                    for (let x = -canvasWidth; x < canvasWidth * 2; x += spacing) {
+                        ctx.fillText(watermarkText, x, y);
+                    }
+                }
+                ctx.restore(); // 恢复画布状态
+            }
+
+
+            // 自动换行函数，根据单词而非字符
+            function wrapText(context, text, x, y, maxWidth) {
+                const words = text.split('');
+                let line = '';
+                let lines = [];
+                for(let n = 0; n < words.length; n++) {
+                    let testLine = line + words[n];
+                    let metrics = context.measureText(testLine);
+                    let testWidth = metrics.width;
+                    if (testWidth > maxWidth && n > 0) {
+                        lines.push(line);
+                        line = words[n];
+                    } else {
+                        line = testLine;
+                    }
+                }
+                lines.push(line);
+
+                let textHeight = 0;
+                const lineHeight = 1.4 * context.measureText('M').width;
+                for (let i = 0; i < lines.length; i++) {
+                    const textY = y + i * lineHeight;
+                    context.strokeText(lines[i], x, textY);
+                    context.fillText(lines[i], x, textY);
+                    textHeight += lineHeight;
+                }
+                return textHeight;
+            }
+
+            // 在 Canvas 上绘制水印
+            function drawWatermark(ctx, canvasWidth, canvasHeight) {
+                const now = new Date();
+                const dateText = `${now.getFullYear()}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getDate().toString().padStart(2, '0')} ${dayNames[now.getDay()]}`;
+                const timeText = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                // 添加位置emoji
+                const locationText = `📍 ${locationInfo.text}`;
+
+                const paddingBottom = Math.max(20, canvasHeight * 0.05);
+                const paddingHorizontal = Math.max(10, canvasWidth * 0.03);
+                const maxWidth = canvasWidth - 2 * paddingHorizontal;
+
+                // 根据图片高度动态调整字体大小
+                const baseFontSize = Math.max(18, Math.floor(canvasHeight / 25));
+                const timeFontSize = baseFontSize * 1.8;
+                const dateFontSize = baseFontSize;
+                const locationFontSize = baseFontSize * 0.9;
+                const spacing = baseFontSize * 0.8; // 行间距
+
+                // 统一设置文本样式
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
+                ctx.lineJoin = 'round';
+                let currentY = canvasHeight - paddingBottom;
+
+                // 调整位置以便绘制居中文本
+                // 绘制位置信息
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.font = `${locationFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                const locationLinesHeight = wrapText(ctx, locationText, canvasWidth / 2, currentY, maxWidth);
+                currentY -= locationLinesHeight + spacing;
+
+                // 绘制日期
+                ctx.font = `bold ${dateFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                ctx.strokeText(dateText, canvasWidth / 2, currentY);
+                ctx.fillText(dateText, canvasWidth / 2, currentY);
+                currentY -= (dateFontSize * 0.8) + spacing;
+
+                // 绘制时间
+                ctx.font = `bold ${timeFontSize}px "Helvetica Neue", Arial, sans-serif`;
+                ctx.strokeText(timeText, canvasWidth / 2, currentY);
+                ctx.fillText(timeText, canvasWidth / 2, currentY);
+            }
+
+            // 实时绘制水印，用于预览
+            function drawRealtimeWatermark() {
+                const ctx = watermarkOverlay.getContext('2d');
+                ctx.clearRect(0, 0, watermarkOverlay.width, watermarkOverlay.height);
+                drawWatermark(ctx, watermarkOverlay.width, watermarkOverlay.height);
+            }
+
+            // 处理图片（拍照或从图库选择）
+            function processImage(sourceElement) {
+                const ctx = photoCanvas.getContext('2d');
+                const isVideo = sourceElement.tagName === 'VIDEO';
+
+                const sourceWidth = isVideo ? sourceElement.videoWidth : sourceElement.naturalWidth;
+                const sourceHeight = isVideo ? sourceElement.videoHeight : sourceElement.naturalHeight;
+
+                photoCanvas.width = sourceWidth;
+                photoCanvas.height = sourceHeight;
+
+                let facingMode = 'unknown';
+                if (currentStream) {
+                    const videoTrack = currentStream.getVideoTracks()[0];
+                    const settings = videoTrack.getSettings();
+                    facingMode = settings.facingMode || 'unknown';
+                }
+
+                if (isVideo && facingMode === 'user') {
+                    ctx.translate(photoCanvas.width, 0);
+                    ctx.scale(-1, 1);
+                }
+
+                ctx.drawImage(sourceElement, 0, 0, photoCanvas.width, photoCanvas.height);
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+                // **关键修改点：先绘制斜向水印，再绘制时间/日期/位置水印**
+                drawDiagonalWatermarkOnCanvas(ctx, photoCanvas.width, photoCanvas.height);
+                drawWatermark(ctx, photoCanvas.width, photoCanvas.height);
+
+                const dataUrl = photoCanvas.toDataURL('image/jpeg', 0.9);
+                previewImage.src = dataUrl;
+                downloadLink.href = dataUrl;
+                const timestamp = new Date();
+                const filename = `实习打卡_${timestamp.getFullYear()}-${(timestamp.getMonth() + 1).toString().padStart(2, '0')}-${timestamp.getDate().toString().padStart(2, '0')}.jpg`;
+                downloadLink.download = filename;
+
+                const isWeChat = navigator.userAgent.toLowerCase().includes('micromessenger');
+                if (isWeChat) {
+                    downloadLink.classList.add('hidden');
+                    wechatSaveTip.classList.remove('hidden');
+                } else {
+                    downloadLink.classList.remove('hidden');
+                    wechatSaveTip.classList.add('hidden');
+                }
+
+                previewModal.classList.remove('hidden');
+                clearInterval(watermarkTimer);
+                stopCurrentStream();
+            }
+
+            // 启动定位服务并更新 UI
+            function startLocationLookup(retryCount = 0) {
+                locationInfo.text = '正在定位...';
+                drawRealtimeWatermark(); // 立即更新UI显示"正在定位..."
+                getLocationBtn.disabled = true;
+                locationIcon.classList.add('hidden');
+                locationSpinner.classList.remove('hidden');
+
+                // 检查浏览器是否支持定位
+                if (!navigator.geolocation) {
+                    getLocationBtn.disabled = false;
+                    locationIcon.classList.remove('hidden');
+                    locationSpinner.classList.add('hidden');
+                    locationInfo.text = `定位失败`;
+                    showMessageBox('定位失败', '您的浏览器不支持定位功能，请使用现代浏览器或检查浏览器设置。');
+                    drawRealtimeWatermark();
+                    return;
+                }
+
+                const geolocator = new AMap.Geolocation({
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                });
+
+                geolocator.getCurrentPosition((status, result) => {
+                    getLocationBtn.disabled = false;
+                    locationIcon.classList.remove('hidden');
+                    locationSpinner.classList.add('hidden');
+
+                    if (status === 'complete') {
+                        const pos = result.position;
+                        locationInfo.lng = pos.lng;
+                        locationInfo.lat = pos.lat;
+
+                        const geocoder = new AMap.Geocoder();
+                        geocoder.getAddress(pos, (status, geocodeResult) => {
+                            if (status === 'complete' && geocodeResult.regeocode) {
+                                locationInfo.text = geocodeResult.regeocode.formattedAddress;
+                                showMessageBox('定位成功', `已获取位置：${locationInfo.text}`);
+                            } else {
+                                locationInfo.text = `无法解析地址`;
+                                showMessageBox('定位成功（部分）', '已获取经纬度，但无法解析详细地址。');
+                            }
+                            drawRealtimeWatermark();
+                        });
+                    } else {
+                        const errorMsg = result.message || '无法获取您的位置信息';
+                        let userMessage = '';
+                        
+                        if (errorMsg.includes('Permission denied') || errorMsg.includes('权限被拒绝')) {
+                            userMessage = '定位权限被拒绝，请检查浏览器定位权限设置。';
+                        } else if (errorMsg.includes('timeout')) {
+                            userMessage = '定位请求超时，请检查网络连接或GPS信号。';
+                        } else if (errorMsg.includes('unavailable')) {
+                            userMessage = '定位服务不可用，请确保已开启设备定位功能。';
+                        } else {
+                            userMessage = '无法获取位置信息，请检查网络和浏览器权限。';
+                        }
+                        
+                        if (retryCount < 2) {
+                            setTimeout(() => startLocationLookup(retryCount + 1), 2000);
+                            // 修复 bug: 增加重试次数的清晰提示
+                            locationInfo.text = `定位失败，正在重试...（${retryCount + 1}/3）`;
+                            drawRealtimeWatermark();
+                        } else {
+                            locationInfo.text = `定位失败`;
+                            locationInfo.lng = null;
+                            locationInfo.lat = null;
+                            showMessageBox('定位失败', `${userMessage} 已达到最大重试次数。`);
+                            drawRealtimeWatermark();
+                        }
+                    }
+                });
+            }
+
+            // 事件监听
+            requestPermissionBtn.addEventListener('click', async () => {
+                permissionScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+                // 修复 bug: 启动摄像头时再获取设备列表
+                await getCameras();
+                startCamera(selectedDeviceId);
+            });
+
+            cameraError.addEventListener('click', () => {
+                startCamera(selectedDeviceId);
+            });
+
+            captureBtn.addEventListener('click', () => {
+                if (currentStream && currentStream.active) {
+                    processImage(video);
+                } else {
+                    showMessageBox('错误', '摄像头未启动或无权限，请重试。');
+                }
+            });
+
+            getLocationBtn.addEventListener('click', () => {
+                startLocationLookup();
+            });
+
+            switchCameraBtn.addEventListener('click', async () => {
+                if (availableCameras.length <= 1) return;
+
+                const currentIndex = availableCameras.findIndex(cam => cam.deviceId === selectedDeviceId);
+                const nextIndex = (currentIndex + 1) % availableCameras.length;
+                selectedDeviceId = availableCameras[nextIndex].deviceId;
+                setCookie('selectedDeviceId', selectedDeviceId, 365);
+                startCamera(selectedDeviceId);
+            });
+
+            closeModalBtn.addEventListener('click', () => {
+                previewModal.classList.add('hidden');
+                startCamera(selectedDeviceId);
+            });
+
+            // 打卡按钮，注意此处的 URL 是一个占位符，请根据您的实际需求修改
+            clockInBtn.addEventListener('click', () => {
+                window.location.href = 'http://nxjy.nhedu.net/student/';
+            });
+        });
+    </script>
+</body>
+</html>
+
