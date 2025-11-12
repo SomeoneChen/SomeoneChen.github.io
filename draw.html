@@ -55,13 +55,20 @@
             justify-content: center;
             margin: 0 auto 25px;
             position: relative;
+            width: 100%;
+            aspect-ratio: 1/1;
+            max-width: 600px;
+            max-height: 600px;
         }
         
         canvas {
+            width: 100%;
+            height: 100%;
             border: 3px solid #4a6fa5;
             border-radius: 50%;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
             background: white;
+            display: block;
         }
         
         .controls {
@@ -231,6 +238,11 @@
             .buttons {
                 flex-direction: column;
             }
+            
+            .canvas-container {
+                max-width: 100%;
+                max-height: 400px;
+            }
         }
     </style>
 </head>
@@ -242,7 +254,7 @@
         </header>
         
         <div class="canvas-container">
-            <canvas id="flowerCanvas" width="600" height="600"></canvas>
+            <canvas id="flowerCanvas"></canvas>
         </div>
         
         <div class="controls">
@@ -254,6 +266,10 @@
                 <div class="control-item">
                     <label for="lineInterval">绘制间隔 (毫秒)</label>
                     <input type="range" id="lineInterval" min="10" max="200" step="5" value="50">
+                </div>
+                <div class="control-item">
+                    <label for="lineWidth">线条粗细</label>
+                    <input type="range" id="lineWidth" min="0.1" max="2" step="0.1" value="0.5">
                 </div>
                 <div class="control-item">
                     <label for="lineColor">线条颜色</label>
@@ -268,7 +284,7 @@
                 </div>
             </div>
             
-            <div class="speed-display" id="speedDisplay">B点速度: 1.5倍 (A点速度: 1.0倍)</div>
+            <div class="speed-display" id="speedDisplay">B点速度: 1.5倍 (A点速度: 1.0倍) | 线条粗细: 0.5</div>
             
             <div class="buttons">
                 <button id="startBtn">▶ 开始绘制</button>
@@ -297,38 +313,54 @@
             <p>• 两点之间的连线会定期保留在画面上</p>
             <p>• 不同的速度比会产生不同的几何图案</p>
             <p>• 速度比为有理数时，图案会闭合；为无理数时，图案会填满整个圆</p>
+            <p>• 使用线条粗细滑块可以调整线条的精细程度</p>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
             const canvas = document.getElementById('flowerCanvas');
             const ctx = canvas.getContext('2d');
             const bSpeedSlider = document.getElementById('bSpeed');
             const lineIntervalSlider = document.getElementById('lineInterval');
+            const lineWidthSlider = document.getElementById('lineWidth');
             const lineColorSelect = document.getElementById('lineColor');
             const speedDisplay = document.getElementById('speedDisplay');
             const startBtn = document.getElementById('startBtn');
             const stopBtn = document.getElementById('stopBtn');
             const resetBtn = document.getElementById('resetBtn');
             
-            // 画布设置
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = Math.min(canvas.width, canvas.height) * 0.4;
-            
-            // 动画变量
+            // 定义全局变量
+            let centerX, centerY, radius;
             let animationId = null;
             let lastDrawTime = 0;
-            let angleA = 0; // A点角度（弧度）
-            let angleB = 0; // B点角度（弧度）
+            let angleA = 0;
+            let angleB = 0;
             let isRunning = false;
-            let lineHistory = []; // 保存历史线条
+            let lineHistory = [];
+            
+            // 动态调整canvas大小
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                
+                // 使canvas适应容器
+                canvas.width = containerWidth;
+                canvas.height = containerHeight;
+                
+                // 重新计算圆心和半径
+                centerX = canvas.width / 2;
+                centerY = canvas.height / 2;
+                radius = Math.min(canvas.width, canvas.height) * 0.4;
+            }
             
             // 更新速度显示
             function updateSpeedDisplay() {
                 const bSpeed = parseFloat(bSpeedSlider.value);
-                speedDisplay.textContent = `B点速度: ${bSpeed}倍 (A点速度: 1.0倍)`;
+                const lineWidth = parseFloat(lineWidthSlider.value);
+                speedDisplay.textContent = `B点速度: ${bSpeed}倍 (A点速度: 1.0倍) | 线条粗细: ${lineWidth}`;
             }
             
             // 绘制圆形轨道
@@ -336,7 +368,7 @@
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
                 ctx.strokeStyle = '#ddd';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 1;
                 ctx.stroke();
             }
             
@@ -347,11 +379,11 @@
                 
                 // 绘制点
                 ctx.beginPath();
-                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
                 ctx.fillStyle = color;
                 ctx.fill();
                 ctx.strokeStyle = '#333';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 1.5;
                 ctx.stroke();
                 
                 // 绘制标签
@@ -362,7 +394,7 @@
             }
             
             // 绘制连接线
-            function drawLine(angleA, angleB, color) {
+            function drawLine(angleA, angleB, color, width) {
                 const x1 = centerX + radius * Math.cos(angleA - Math.PI/2);
                 const y1 = centerY + radius * Math.sin(angleA - Math.PI/2);
                 const x2 = centerX + radius * Math.cos(angleB - Math.PI/2);
@@ -372,10 +404,10 @@
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
                 ctx.strokeStyle = color;
-                ctx.lineWidth = 1.5;
+                ctx.lineWidth = width;
                 ctx.stroke();
                 
-                return { x1, y1, x2, y2, color };
+                return { x1, y1, x2, y2, color, width };
             }
             
             // 清除画布
@@ -390,7 +422,7 @@
                     ctx.moveTo(line.x1, line.y1);
                     ctx.lineTo(line.x2, line.y2);
                     ctx.strokeStyle = line.color;
-                    ctx.lineWidth = 1.5;
+                    ctx.lineWidth = line.width;
                     ctx.stroke();
                 });
             }
@@ -411,14 +443,15 @@
                 // 获取参数
                 const bSpeed = parseFloat(bSpeedSlider.value);
                 const lineInterval = parseInt(lineIntervalSlider.value);
+                const lineWidth = parseFloat(lineWidthSlider.value);
                 const lineColor = lineColorSelect.value;
                 
-                // 计算时间差（假设60fps）
-                const deltaTime = 16; // 约60fps
+                // 计算时间差
+                const deltaTime = 16;
                 
                 // 更新角度（逆时针运动）
-                angleA += 0.01 * deltaTime; // A点恒定速度
-                angleB += 0.01 * bSpeed * deltaTime; // B点可调速度
+                angleA += 0.01 * deltaTime;
+                angleB += 0.01 * bSpeed * deltaTime;
                 
                 // 保持角度在0-2π范围内
                 angleA %= Math.PI * 2;
@@ -426,13 +459,13 @@
                 
                 // 定期绘制线条
                 if (currentTime - lastDrawTime > lineInterval) {
-                    const line = drawLine(angleA, angleB, lineColor);
+                    const line = drawLine(angleA, angleB, lineColor, lineWidth);
                     lineHistory.push(line);
                     lastDrawTime = currentTime;
                 }
                 
-                // 绘制当前连接线（更亮的颜色）
-                drawLine(angleA, angleB, '#FF69B4');
+                // 绘制当前连接线
+                drawLine(angleA, angleB, '#FF69B4', Math.max(0.8, lineWidth + 0.3));
                 
                 // 绘制点
                 drawPoint(angleA, '#4a6fa5', 'A');
@@ -478,26 +511,36 @@
                 stopBtn.disabled = true;
             }
             
-            // 事件监听器
-            bSpeedSlider.addEventListener('input', updateSpeedDisplay);
-            startBtn.addEventListener('click', startAnimation);
-            stopBtn.addEventListener('click', stopAnimation);
-            resetBtn.addEventListener('click', resetCanvas);
-            
             // 初始化
+            resizeCanvas();
             updateSpeedDisplay();
             resetCanvas();
             stopBtn.disabled = true;
             
-            // 窗口大小调整处理
+            // 事件监听器
+            bSpeedSlider.addEventListener('input', updateSpeedDisplay);
+            lineIntervalSlider.addEventListener('input', updateSpeedDisplay);
+            lineWidthSlider.addEventListener('input', updateSpeedDisplay);
+            startBtn.addEventListener('click', startAnimation);
+            stopBtn.addEventListener('click', stopAnimation);
+            resetBtn.addEventListener('click', resetCanvas);
+            
+            // 响应窗口大小变化
             window.addEventListener('resize', function() {
+                resizeCanvas();
                 if (isRunning) {
                     stopAnimation();
                     resetCanvas();
                     alert('窗口大小已调整，请重新开始绘制。');
+                } else {
+                    clearCanvas();
+                    drawCircle();
+                    drawPoint(0, '#4a6fa5', 'A');
+                    drawPoint(0, '#f44336', 'B');
                 }
             });
         });
     </script>
 </body>
 </html>
+
