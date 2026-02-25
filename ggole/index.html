@@ -1,476 +1,56 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>gu哥搜索</title>
     <link rel="stylesheet" href="styles.css">
     <script>
-        // 立即检测URL参数，如果有search参数，直接执行搜索
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const searchTerm = urlParams.get('search');
-            
-            if (searchTerm) {
-                // 解析搜索关键词，提取搜索方式
-                function parseSearchTerm(searchTerm) {
-                    const parts = searchTerm.split(' ');
-                    const lastPart = parts[parts.length - 1].toLowerCase();
-                    
-                    // 检查最后一部分是否是搜索方式指定
-                    const searchModes = {
-                        '百度': 'https://www.baidu.com/s?wd=',
-                        '谷歌': 'https://www.google.com/search?q=',
-                        'google': 'https://www.google.com/search?q=',
-                        'baidu': 'https://www.baidu.com/s?wd=',
-                        'googleai': 'https://www.google.com/search?udm=50&q=',
-                        '谷歌ai': 'https://www.google.com/search?udm=50&q=',
-                        '百度ai': 'https://chat.baidu.com/search?word=',
-                        'meta': 'https://metaso.cn/?q=',
-                        '秘塔': 'https://metaso.cn/?q=',
-                        'metaso': 'https://metaso.cn/?q=',
-                        'github': 'https://github.com/search?q=',
-                        'gitee': 'https://so.gitee.com/?q=',
-                        'gpt': 'https://chatgpt.com/?q=',
-                        'chatgpt': 'https://chatgpt.com/?q=',
-                        'cs': 'https://chatgpt.com/?q='
-                    };
-                    
-                    if (searchModes[lastPart]) {
-                        // 提取搜索方式和实际搜索词
-                        const actualSearchTerm = parts.slice(0, -1).join(' ');
-                        return {
-                            searchTerm: actualSearchTerm,
-                            searchEngine: searchModes[lastPart],
-                            isAISearch: lastPart.includes('ai')
-                        };
-                    }
-                    
-                    // 没有指定搜索方式，使用默认
-                    return {
-                        searchTerm: searchTerm,
-                        searchEngine: null,
-                        isAISearch: false
-                    };
-                }
-                
-                // 存储IP检测结果
-                let ipInfo = {
-                    domestic: null,
-                    international: null,
-                    isChinese: true,
-                    mode: '',
-                    country: '中国',
-                    ip: '',
-                    location: ''
-                };
-                
-                const IP_CACHE_KEY = 'gugooleIpCache';
-                const IP_CACHE_DURATION = 60 * 60 * 1000; // 缓存1小时
-                
-                // 保存IP检测结果到缓存
-                function saveIPCache(data) {
-                    try {
-                        const cacheData = {
-                            data: data,
-                            timestamp: Date.now()
-                        };
-                        localStorage.setItem(IP_CACHE_KEY, JSON.stringify(cacheData));
-                    } catch (e) {
-                        console.error('保存IP缓存失败:', e);
-                    }
-                }
-                
-                // 从缓存获取IP检测结果
-                function getIPCache() {
-                    try {
-                        const cacheData = localStorage.getItem(IP_CACHE_KEY);
-                        if (cacheData) {
-                            const parsedData = JSON.parse(cacheData);
-                            const now = Date.now();
-                            if (now - parsedData.timestamp < IP_CACHE_DURATION) {
-                                return parsedData.data;
-                            }
-                        }
-                        return null;
-                    } catch (e) {
-                        console.error('获取IP缓存失败:', e);
-                        return null;
-                    }
-                }
-                
-                // 检查快捷关键字
-                function handleShortcutKeywords(searchTerm) {
-                    const bilibiliKeywords = ['bilibili', 'Bilibili', '哔哩哔哩', 'b站', 'B站'];
-                    const deepseekKeywords = ['deepseek', 'Deepseek', 'DS', 'ds'];
-                    const qwenKeywords = ['qwen', 'qianwen', '千问'];
-                    const chatgptKeywords = ['chatgpt', 'ChatGPT'];
-                    const grokKeywords = ['grok', 'Grok'];
-                    const claudeKeywords = ['claude', 'Claude'];
-                    const doubaoKeywords = ['doubao', 'Doubao', '豆包'];
-                    
-                    if (bilibiliKeywords.includes(searchTerm)) {
-                        return { redirect: true, url: 'https://www.bilibili.com' };
-                    } else if (deepseekKeywords.includes(searchTerm)) {
-                        return { redirect: true, url: 'https://chat.deepseek.com' };
-                    } else if (qwenKeywords.includes(searchTerm)) {
-                        return { redirect: true, url: 'https://chat.qwen.ai' };
-                    } else if (chatgptKeywords.includes(searchTerm)) {
-                        return { redirect: true, url: 'https://chatgpt.com' };
-                    } else if (grokKeywords.includes(searchTerm)) {
-                        return { redirect: true, url: 'https://grok.com' };
-                    } else if (claudeKeywords.includes(searchTerm)) {
-                        return { redirect: true, url: 'https://claude.ai' };
-                    } else if (doubaoKeywords.includes(searchTerm)) {
-                        return { redirect: true, url: 'https://doubao.com' };
-                    }
-                    return { redirect: false };
-                }
-                
-                const shortcutResult = handleShortcutKeywords(searchTerm);
-                if (shortcutResult.redirect) {
-                    // 防止UI渲染
-                    document.write('<div style="display:none;">');
-                    window.location.href = shortcutResult.url;
-                    return;
-                }
-                
-                // 解析搜索词
-                const parsed = parseSearchTerm(searchTerm);
-                
-                if (parsed.searchEngine) {
-                    // 使用指定的搜索方式
-                    const encodedSearchTerm = encodeURIComponent(parsed.searchTerm);
-                    let url = `${parsed.searchEngine}${encodedSearchTerm}`;
-                    
-                    // 为ChatGPT添加额外参数
-                    if (url.includes('chatgpt.com/?q=')) {
-                        url += '&hints=search&ref=ext';
-                    }
-                    
-                    // 尝试获取IP缓存，确保缓存机制正常工作
-                    const cachedIP = getIPCache();
-                    if (!cachedIP) {
-                        // 如果没有缓存，执行一次IP检测并保存
-                        (function() {
-                            // 带超时的fetch请求
-                            function fetchWithTimeout(url, options = {}, timeout = 5000) {
-                                return Promise.race([
-                                    fetch(url, options),
-                                    new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时')), timeout))
-                                ]);
-                            }
-                            
-                            // 检测国内IP
-                            function detectDomesticIP() {
-                                return new Promise((resolve) => {
-                                    fetchWithTimeout('https://my.ip.cn/')
-                                        .then(response => response.text())
-                                        .then(data => {
-                                            // 解析HTML获取IP和归属地
-                                            const ipMatch = data.match(/ip：([\d.]+)/);
-                                            const locationMatch = data.match(/归属地：([^<]+)/);
-                                            
-                                            if (ipMatch) {
-                                                const ip = ipMatch[1];
-                                                const location = locationMatch ? locationMatch[1] : '';
-                                                const isChinese = location.includes('中国');
-                                                resolve({ ip, location, isChinese });
-                                            } else {
-                                                resolve(null);
-                                            }
-                                        })
-                                        .catch(error => {
-                                            resolve(null);
-                                        });
-                                });
-                            }
-                            
-                            // 检测国际IP
-                            function detectInternationalIP() {
-                                return new Promise((resolve) => {
-                                    fetchWithTimeout('https://api-ipv4.ip.sb/geoip')
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            const isChinese = data.country_code === 'CN';
-                                            resolve({ ...data, isChinese });
-                                        })
-                                        .catch(error => {
-                                            resolve(null);
-                                        });
-                                });
-                            }
-                            
-                            // 检测用户IP位置
-                            function detectIPLocation() {
-                                return new Promise((resolve) => {
-                                    Promise.all([detectDomesticIP(), detectInternationalIP()])
-                                        .then(([domesticResult, internationalResult]) => {
-                                            let isChinese = true;
-                                            let mode = '';
-                                            let country = '中国';
-                                            let ip = '';
-                                            let location = '';
-                                            
-                                            if (domesticResult && internationalResult) {
-                                                ip = domesticResult.ip;
-                                                location = domesticResult.location;
-                                                
-                                                if (domesticResult.isChinese && !internationalResult.isChinese) {
-                                                    // 国内API返回中国，国际API返回非中国
-                                                    isChinese = true;
-                                                    mode = `规则模式-${internationalResult.country || '国际'}`;
-                                                } else if (!domesticResult.isChinese && !internationalResult.isChinese) {
-                                                    // 两个API都返回非中国
-                                                    isChinese = false;
-                                                    mode = `全局模式-${internationalResult.country || '国际'}`;
-                                                    country = internationalResult.country || '国际';
-                                                } else {
-                                                    // 其他情况默认中国
-                                                    isChinese = true;
-                                                    mode = '规则模式-中国';
-                                                }
-                                            } else if (internationalResult) {
-                                                // 只有国际API有结果
-                                                ip = internationalResult.ip;
-                                                location = `${internationalResult.country} ${internationalResult.city}`;
-                                                isChinese = internationalResult.isChinese;
-                                                mode = isChinese ? '规则模式-中国' : `全局模式-${internationalResult.country || '国际'}`;
-                                                country = isChinese ? '中国' : (internationalResult.country || '国际');
-                                            } else if (domesticResult) {
-                                                // 只有国内API有结果
-                                                ip = domesticResult.ip;
-                                                location = domesticResult.location;
-                                                isChinese = domesticResult.isChinese;
-                                                mode = isChinese ? '规则模式-中国' : '全局模式-国际';
-                                                country = isChinese ? '中国' : '国际';
-                                            } else {
-                                                // 都没有结果，默认中国
-                                                isChinese = true;
-                                                mode = '规则模式-中国';
-                                            }
-                                            
-                                            ipInfo.isChinese = isChinese;
-                                            ipInfo.mode = mode;
-                                            ipInfo.country = country;
-                                            ipInfo.ip = ip;
-                                            ipInfo.location = location;
-                                            
-                                            // 保存到缓存
-                                            saveIPCache(ipInfo);
-                                            
-                                            resolve(isChinese);
-                                        })
-                                        .catch(error => {
-                                            // 出错时默认认为是中国IP
-                                            ipInfo.isChinese = true;
-                                            ipInfo.mode = '规则模式-中国';
-                                            ipInfo.country = '中国';
-                                            ipInfo.ip = '';
-                                            ipInfo.location = '';
-                                            
-                                            // 保存到缓存
-                                            saveIPCache(ipInfo);
-                                            
-                                            resolve(true);
-                                        });
-                                });
-                            }
-                            
-                            // 执行IP检测
-                            detectIPLocation();
-                        })();
-                    }
-                    
-                    // 防止UI渲染
-                    document.write('<div style="display:none;">');
-                    
-                    // 跳转到搜索结果
-                    window.location.href = url;
-                    return;
-                } else {
-                    // 有search参数，直接执行搜索，不加载UI
-                    const encodedSearchTerm = encodeURIComponent(searchTerm);
-                    
-                    // 存储搜索引擎设置
-                    const SEARCH_ENGINES = {
-                        default: {
-                            domestic: 'https://www.baidu.com/s?wd=',
-                            international: 'https://www.google.com/search?q='
-                        }
-                    };
-                    
-                    // 从本地存储获取设置
-                    function getSettings() {
-                        try {
-                            const settings = localStorage.getItem('gugooleSettings');
-                            return settings ? JSON.parse(settings) : SEARCH_ENGINES.default;
-                        } catch (e) {
-                            return SEARCH_ENGINES.default;
-                        }
-                    }
-                    
-                    // 带超时的fetch请求
-                    function fetchWithTimeout(url, options = {}, timeout = 5000) {
-                        return Promise.race([
-                            fetch(url, options),
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时')), timeout))
-                        ]);
-                    }
-                    
-                    // 检测国内IP
-                    function detectDomesticIP() {
-                        return new Promise((resolve) => {
-                            fetchWithTimeout('https://my.ip.cn/')
-                                .then(response => response.text())
-                                .then(data => {
-                                    // 解析HTML获取IP和归属地
-                                    const ipMatch = data.match(/ip：([\d.]+)/);
-                                    const locationMatch = data.match(/归属地：([^<]+)/);
-                                    
-                                    if (ipMatch) {
-                                        const ip = ipMatch[1];
-                                        const location = locationMatch ? locationMatch[1] : '';
-                                        const isChinese = location.includes('中国');
-                                        resolve({ ip, location, isChinese });
-                                    } else {
-                                        resolve(null);
-                                    }
-                                })
-                                .catch(error => {
-                                    resolve(null);
-                                });
-                        });
-                    }
-                    
-                    // 检测国际IP
-                    function detectInternationalIP() {
-                        return new Promise((resolve) => {
-                            fetchWithTimeout('https://api-ipv4.ip.sb/geoip')
-                                .then(response => response.json())
-                                .then(data => {
-                                    const isChinese = data.country_code === 'CN';
-                                    resolve({ ...data, isChinese });
-                                })
-                                .catch(error => {
-                                    resolve(null);
-                                });
-                        });
-                    }
-                    
-                    // 检测用户IP位置
-                    function detectIPLocation() {
-                        return new Promise((resolve) => {
-                            // 先尝试从缓存获取
-                            const cachedIP = getIPCache();
-                            if (cachedIP) {
-                                ipInfo = { ...cachedIP };
-                                resolve(cachedIP.isChinese);
-                                return;
-                            }
-                            
-                            // 缓存不存在，执行新的检测
-                            Promise.all([detectDomesticIP(), detectInternationalIP()])
-                                .then(([domesticResult, internationalResult]) => {
-                                    let isChinese = true;
-                                    let mode = '';
-                                    let country = '中国';
-                                    let ip = '';
-                                    let location = '';
-                                    
-                                    if (domesticResult && internationalResult) {
-                                        ip = domesticResult.ip;
-                                        location = domesticResult.location;
-                                        
-                                        if (domesticResult.isChinese && !internationalResult.isChinese) {
-                                            // 国内API返回中国，国际API返回非中国
-                                            isChinese = false; // 使用国际搜索引擎
-                                            mode = `规则模式-${internationalResult.country || '国际'}`;
-                                        } else if (!domesticResult.isChinese && !internationalResult.isChinese) {
-                                            // 两个API都返回非中国
-                                            isChinese = false; // 使用国际搜索引擎
-                                            mode = `全局模式-${internationalResult.country || '国际'}`;
-                                            country = internationalResult.country || '国际';
-                                        } else {
-                                            // 其他情况默认中国
-                                            isChinese = true; // 使用国内搜索引擎
-                                            mode = '规则模式-中国';
-                                        }
-                                    } else if (internationalResult) {
-                                        // 只有国际API有结果
-                                        ip = internationalResult.ip;
-                                        location = `${internationalResult.country} ${internationalResult.city}`;
-                                        isChinese = internationalResult.isChinese;
-                                        mode = isChinese ? '规则模式-中国' : `全局模式-${internationalResult.country || '国际'}`;
-                                        country = isChinese ? '中国' : (internationalResult.country || '国际');
-                                    } else if (domesticResult) {
-                                        // 只有国内API有结果
-                                        ip = domesticResult.ip;
-                                        location = domesticResult.location;
-                                        isChinese = domesticResult.isChinese;
-                                        mode = isChinese ? '规则模式-中国' : '全局模式-国际';
-                                        country = isChinese ? '中国' : '国际';
-                                    } else {
-                                        // 都没有结果，默认中国
-                                        isChinese = true;
-                                        mode = '规则模式-中国';
-                                    }
-                                    
-                                    ipInfo.isChinese = isChinese;
-                                    ipInfo.mode = mode;
-                                    ipInfo.country = country;
-                                    ipInfo.ip = ip;
-                                    ipInfo.location = location;
-                                    
-                                    // 保存到缓存
-                                    saveIPCache(ipInfo);
-                                    
-                                    resolve(isChinese);
-                                })
-                                .catch(error => {
-                                    // 出错时默认认为是中国IP
-                                    ipInfo.isChinese = true;
-                                    ipInfo.mode = '规则模式-中国';
-                                    ipInfo.country = '中国';
-                                    ipInfo.ip = '';
-                                    ipInfo.location = '';
-                                    
-                                    // 保存到缓存
-                                    saveIPCache(ipInfo);
-                                    
-                                    resolve(true);
-                                });
-                        });
-                    }
-                    
-                    // 执行搜索
-                    function executeSearch() {
-                        detectIPLocation().then(isChinese => {
-                            const settings = getSettings();
-                            const searchEngine = isChinese ? settings.domestic : settings.international;
-                            window.location.href = `${searchEngine}${encodedSearchTerm}`;
-                        });
-                    }
-                    
-                    // 执行搜索
-                    executeSearch();
-                    
-                    // 防止UI渲染
-                    document.write('<div style="display:none;">');
-                    return;
-                }
-            }
+        /**
+         * Startup Search Handler - Extremely fast redirect for address bar searches
+         */
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const term = params.get('search');
+            if (!term) return;
+
+            document.documentElement.style.display = 'none';
+
+            const ENGINES = {
+                '百度': 'https://www.baidu.com/s?wd=', 'baidu': 'https://www.baidu.com/s?wd=',
+                '谷歌': 'https://www.google.com/search?q=', 'google': 'https://www.google.com/search?q=',
+                'googleai': 'https://www.google.com/search?udm=50&q=', '谷歌ai': 'https://www.google.com/search?udm=50&q=',
+                '百度ai': 'https://chat.baidu.com/search?word=', 'meta': 'https://metaso.cn/?q=',
+                '秘塔': 'https://metaso.cn/?q=', 'github': 'https://github.com/search?q=',
+                'gitee': 'https://so.gitee.com/?q=', 'gpt': 'https://chatgpt.com/?q=',
+                'chatgpt': 'https://chatgpt.com/?q=', 'cs': 'https://chatgpt.com/?q='
+            };
+
+            const settings = (() => {
+                try { return JSON.parse(localStorage.getItem('gugooleSettings')); } catch (e) { return null; }
+            })() || { domestic: 'https://www.baidu.com/s?wd=', international: 'https://www.google.com/search?q=' };
+
+            const redirect = (url) => window.location.replace(url + encodeURIComponent(term));
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => {
+                controller.abort();
+                redirect(settings.domestic);
+            }, 1000);
+
+            fetch('https://www.google.com/generate_204', { mode: 'no-cors', cache: 'no-cache', signal: controller.signal })
+                .then(() => { clearTimeout(timeout); redirect(settings.international); })
+                .catch(() => { clearTimeout(timeout); redirect(settings.domestic); });
         })();
     </script>
-    
 
-    
     <main>
         <div class="logo-container">
             <img src="logo.png" alt="Gugoole">
             <div class="slogan">更高效的搜索控制器</div>
         </div>
-        
+
         <div class="search-container">
             <div class="search-box">
                 <input type="text" id="search-input" placeholder="回车搜索或Tab键回车触发AI搜索" autofocus>
@@ -480,23 +60,19 @@
             </div>
         </div>
     </main>
-    
+
     <footer>
         <div class="footer-bottom">
             <div class="footer-left">
-                <a href="#" id="footer-ip-location" title="点击刷新IP检测">IP检测中...</a>
+                <a href="#" id="footer-ip-location" title="点击刷新IP检测">检测中...</a>
             </div>
             <div class="footer-right">
                 <a href="#">设置</a>
             </div>
         </div>
     </footer>
-    
-    <script>
-        // 关闭隐藏的div
-        document.write('</div>');
-    </script>
-    
+
     <script src="script.js"></script>
-</body>
+    </body>
+
 </html>
