@@ -55,11 +55,12 @@
 
         <div class="search-container">
             <div class="search-box">
-                <input type="text" id="search-input" placeholder="回车搜索或Tab键回车触发AI搜索" autofocus>
+                <input type="text" id="search-input" placeholder="回车搜索或Tab键回车触发AI搜索" autofocus autocomplete="off">
                 <button id="ai-search-btn" class="ai-search-btn" title="AI搜索">
                     <span>AI搜索</span>
                 </button>
             </div>
+            <ul id="suggestions-list" class="suggestions-list"></ul>
         </div>
     </main>
 

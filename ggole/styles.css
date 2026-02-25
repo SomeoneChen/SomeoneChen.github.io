@@ -9,30 +9,69 @@ body {
     font-size: 14px;
     line-height: 1.5;
     color: #202124;
-    background-color: #ffffff;
+    background-color: transparent;
+    /* Changed to transparent to show :before background */
+}
+
+body:before {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 1;
+    z-index: -2;
+    content: "";
+    position: fixed;
+    background: url(https://api.paugram.com/bing/) center/cover no-repeat;
+    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.8s ease;
+    filter: blur(0);
+    transform: scale(1);
+    will-change: transform, filter;
+}
+
+/* Gray Mask Overlay */
+body:after {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    content: "";
+    position: fixed;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: -1;
+    transition: background 0.8s ease;
+}
+
+body.focus-mode:before {
+    transform: scale(1.1);
+    filter: blur(10px);
+}
+
+body.focus-mode:after {
+    background: rgba(0, 0, 0, 0.6);
 }
 
 /* 适配黑夜模式 */
 @media (prefers-color-scheme: dark) {
     body {
         color: #e8eaed !important;
-        background-color: #202124 !important;
+        background-color: transparent !important;
     }
-    
+
     .search-box {
         border: 1px solid #5f6368 !important;
         background-color: #303134 !important;
     }
-    
+
     .search-box input {
         color: #e8eaed !important;
         background-color: transparent !important;
     }
-    
+
     footer {
         background-color: #171717 !important;
     }
-    
+
     .footer-left a,
     .footer-right a {
         color: #9aa0a6 !important;
@@ -80,11 +119,11 @@ main {
     .logo-container img {
         width: 250px;
     }
-    
+
     .logo-container .slogan {
         font-size: 14px;
     }
-    
+
     .search-container {
         max-width: 400px;
     }
@@ -94,7 +133,7 @@ main {
     .logo-container img {
         width: 200px;
     }
-    
+
     .search-container {
         max-width: 300px;
     }
@@ -106,11 +145,94 @@ main {
     border: 1px solid #dfe1e5;
     border-radius: 24px;
     padding: 10px 15px;
+    position: relative;
+    z-index: 100;
+    background: white;
 }
 
-.search-box:hover {
+.search-box:hover,
+.search-box:focus-within {
     box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
 }
+
+.suggestions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background: white;
+    border: 1px solid #dfe1e5;
+    border-top: none;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 4px 6px rgba(32, 33, 36, 0.28);
+    position: absolute;
+    width: 100%;
+    max-width: 600px;
+    z-index: 99;
+    display: none;
+    overflow-y: auto;
+    max-height: 400px;
+    margin-top: -20px;
+    padding-top: 25px;
+}
+
+.suggestions-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.suggestions-list::-webkit-scrollbar-thumb {
+    background: #dfe1e5;
+    border-radius: 3px;
+}
+
+.suggestions-list.active {
+    display: block;
+}
+
+.suggestion-item {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #202124;
+    display: flex;
+    align-items: center;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+    background-color: #f1f3f4;
+}
+
+
+/* Dark Mode Support for suggestions */
+@media (prefers-color-scheme: dark) {
+    .suggestions-list {
+        background-color: #303134;
+        border-color: #5f6368;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .suggestion-item {
+        color: #e8eaed;
+    }
+
+    .suggestion-item:hover,
+    .suggestion-item.selected {
+        background-color: #3c4043;
+    }
+}
+
+@media (max-width: 768px) {
+    .suggestions-list {
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    .suggestions-list {
+        max-width: 300px;
+    }
+}
+
 
 .search-box input {
     width: 100%;
@@ -182,17 +304,17 @@ footer {
     .logo-container img {
         width: 400px;
     }
-    
+
     .search-container {
         max-width: 400px;
     }
-    
+
     .footer-bottom {
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
     }
-    
+
     .footer-left,
     .footer-right {
         text-align: center;
@@ -204,11 +326,11 @@ footer {
     .logo-container img {
         width: 300px;
     }
-    
+
     .search-container {
         max-width: 300px;
     }
-    
+
     .header-left a,
     .header-right a {
         margin: 0 5px;

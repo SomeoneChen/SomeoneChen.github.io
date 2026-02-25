@@ -6,6 +6,7 @@
 const CONFIG = {
     IP_CACHE_KEY: 'gugooleIpCache',
     SETTINGS_KEY: 'gugooleSettings',
+    SUGGESTION_PROXY: 'https://suggestions-proxy.chensixing666.workers.dev', // 替换为你的 Worker 地址
     CACHE_DURATION: 3600000, // 1 hour
     SLOGANS: [
         "更高效的搜索控制器",
@@ -52,6 +53,8 @@ let state = {
     isChinese: true,
     isInternational: null,
     connectivityPromise: null,
+    suggestions: [],
+    selectedIndex: -1,
     mode: '检测中...',
     settings: (() => {
         try {
@@ -64,6 +67,14 @@ let state = {
 const Utils = {
     fetchWithTimeout: (url, timeout = 5000) =>
         Promise.race([fetch(url), new Promise((_, reject) => setTimeout(() => reject('Timeout'), timeout))]),
+
+    debounce: (fn, delay) => {
+        let timer = null;
+        return function (...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    },
 
     saveSettings: (settings) => {
         state.settings = settings;
@@ -212,6 +223,115 @@ const SearchHandler = {
     }
 };
 
+// --- Suggestions Logic ---
+const SuggestionsHandler = {
+    originalQuery: '',
+    longPressTimer: null,
+
+    async fetchSuggestions(query) {
+        if (!query || query.length < 1 || query.includes(' ')) {
+            this.hide();
+            return;
+        }
+        this.originalQuery = query;
+
+        try {
+            const res = await fetch(`${CONFIG.SUGGESTION_PROXY}?q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            if (Array.isArray(data) && data[1]) {
+                state.suggestions = data[1].slice(0, 10); // Limit to 10
+                this.render();
+            }
+        } catch (e) {
+            console.error('Suggestions fetch failed', e);
+        }
+    },
+
+    render() {
+        const list = document.getElementById('suggestions-list');
+        if (!list || !state.suggestions.length) {
+            this.hide();
+            return;
+        }
+
+        list.innerHTML = state.suggestions.map((s, i) => `
+            <li class="suggestion-item ${i === state.selectedIndex ? 'selected' : ''}" data-index="${i}">${s}</li>
+        `).join('');
+        list.classList.add('active');
+
+        // Add listeners
+        list.querySelectorAll('.suggestion-item').forEach(item => {
+            const val = item.textContent;
+
+            // Single click -> Search
+            item.onclick = (e) => {
+                const input = document.getElementById('search-input');
+                input.value = val;
+                this.hide();
+                SearchHandler.execute();
+            };
+
+            // Long press logic
+            item.onmousedown = () => {
+                this.longPressTimer = setTimeout(() => {
+                    const input = document.getElementById('search-input');
+                    input.value = val;
+                    this.longPressTimer = null;
+                }, 500);
+            };
+            item.onmouseup = () => {
+                if (this.longPressTimer) clearTimeout(this.longPressTimer);
+            };
+            item.onmouseleave = () => {
+                if (this.longPressTimer) clearTimeout(this.longPressTimer);
+            };
+        });
+    },
+
+    hide() {
+        const list = document.getElementById('suggestions-list');
+        if (list) list.classList.remove('active');
+        state.suggestions = [];
+        state.selectedIndex = -1;
+    },
+
+    handleKeydown(e) {
+        if (!state.suggestions.length) return;
+
+        const input = document.getElementById('search-input');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            state.selectedIndex = (state.selectedIndex + 1) % state.suggestions.length;
+            input.value = state.suggestions[state.selectedIndex];
+            this.render();
+            this.scrollToSelected();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            state.selectedIndex = state.selectedIndex <= 0 ? state.suggestions.length - 1 : state.selectedIndex - 1;
+            input.value = state.suggestions[state.selectedIndex];
+            this.render();
+            this.scrollToSelected();
+        } else if (e.key === 'Enter' && state.selectedIndex >= 0) {
+            e.preventDefault();
+            input.value = state.suggestions[state.selectedIndex];
+            this.hide();
+            SearchHandler.execute();
+        } else if (e.key === 'Escape') {
+            input.value = this.originalQuery;
+            this.hide();
+        }
+    },
+
+    scrollToSelected() {
+        const list = document.getElementById('suggestions-list');
+        const selected = list.querySelector('.selected');
+        if (selected) {
+            selected.scrollIntoView({ block: 'nearest' });
+        }
+    }
+};
+
 // --- UI Components ---
 const UI = {
     openSettings() {
@@ -275,12 +395,32 @@ function init() {
     const settingsBtn = document.querySelector('footer .footer-right a');
 
     if (input) {
+        const debouncedFetch = Utils.debounce((val) => SuggestionsHandler.fetchSuggestions(val), 300);
+
         input.addEventListener('keypress', e => e.key === 'Enter' && SearchHandler.execute());
-        input.addEventListener('input', e => SearchHandler.updateUI(e.target.value));
+        input.addEventListener('input', e => {
+            SearchHandler.updateUI(e.target.value);
+            debouncedFetch(e.target.value);
+        });
+        input.addEventListener('keydown', e => SuggestionsHandler.handleKeydown(e));
+        input.addEventListener('focus', () => {
+            document.body.classList.add('focus-mode');
+            if (input.value) SuggestionsHandler.fetchSuggestions(input.value);
+        });
+        input.addEventListener('blur', () => {
+            document.body.classList.remove('focus-mode');
+            // Delay hide to allow click on suggestion
+            setTimeout(() => SuggestionsHandler.hide(), 200);
+        });
     }
     if (aiBtn) aiBtn.addEventListener('click', () => SearchHandler.execute(true));
     if (refreshIp) refreshIp.addEventListener('click', e => { e.preventDefault(); localStorage.removeItem(CONFIG.IP_CACHE_KEY); IPManager.detect(); });
     if (settingsBtn) settingsBtn.addEventListener('click', e => { e.preventDefault(); UI.openSettings(); });
+
+    // Initial focus check (for autofocus)
+    if (input === document.activeElement) {
+        document.body.classList.add('focus-mode');
+    }
 }
 
 if (document.readyState === 'loading') {

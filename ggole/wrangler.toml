@@ -1,0 +1,6 @@
+name = "suggestions-proxy"
+main = "suggestions-worker.js"
+compatibility_date = "2024-01-01"
+
+[builders]
+# No specific builders needed for this simple script
