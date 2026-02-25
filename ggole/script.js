@@ -7,6 +7,13 @@ const CONFIG = {
     IP_CACHE_KEY: 'gugooleIpCache',
     SETTINGS_KEY: 'gugooleSettings',
     CACHE_DURATION: 3600000, // 1 hour
+    SLOGANS: [
+        "更高效的搜索控制器",
+        "势如破竹",
+        "我就感觉到快",
+        "快如闪电",
+        "有催人跑的意思"
+    ],
     ENGINES: {
         google: { name: 'Google', url: 'https://www.google.com/search?q=', ai: 'https://www.google.com/search?udm=50&q=' },
         baidu: { name: '百度', url: 'https://www.baidu.com/s?wd=', ai: 'https://chat.baidu.com/search?word=' },
@@ -254,6 +261,12 @@ const UI = {
 
 // --- Initialization ---
 function init() {
+    // Random Slogan
+    const sloganEl = document.querySelector('.slogan');
+    if (sloganEl) {
+        sloganEl.textContent = CONFIG.SLOGANS[Math.floor(Math.random() * CONFIG.SLOGANS.length)];
+    }
+
     IPManager.detect();
 
     const input = document.getElementById('search-input');
@@ -270,4 +283,8 @@ function init() {
     if (settingsBtn) settingsBtn.addEventListener('click', e => { e.preventDefault(); UI.openSettings(); });
 }
 
-window.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
