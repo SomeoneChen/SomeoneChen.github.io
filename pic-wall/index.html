@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Lumina Gallery | 极致照片墙</title>
-  <script type="module" crossorigin src="/pic-wall/assets/index-wFU0ARaO.js"></script>
-  <link rel="stylesheet" crossorigin href="/pic-wall/assets/index-B-_Gi5ya.css">
+  <script type="module" crossorigin src="/pic-wall/assets/index-Df84FIqL.js"></script>
+  <link rel="stylesheet" crossorigin href="/pic-wall/assets/index-hvm3ZjaH.css">
 </head>
 <body>
 <div id="app">
@@ -94,12 +94,19 @@
             </div>
             <div class="lb-info-bar" id="lb-info-bar">
                 <div class="lb-filename" id="lb-filename"></div>
-                <button id="lb-detail-toggle" class="icon-btn" title="查看EXIF详情">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                </button>
+                <div class="lb-actions">
+                    <button id="lb-download-btn" class="icon-btn" title="下载原图">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button id="lb-detail-toggle" class="icon-btn" title="查看 EXIF 详情">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div id="lb-detail" class="lb-detail hidden">
                 <div class="exif-grid" id="exif-grid"></div>
