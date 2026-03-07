@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Lumina Gallery | 极致照片墙</title>
-  <script type="module" crossorigin src="/pic-wall/assets/index-Df84FIqL.js"></script>
-  <link rel="stylesheet" crossorigin href="/pic-wall/assets/index-hvm3ZjaH.css">
+  <script type="module" crossorigin src="/wall-pic/assets/index-CVvieKYi.js"></script>
+  <link rel="stylesheet" crossorigin href="/wall-pic/assets/index-C5OuolKn.css">
 </head>
 <body>
 <div id="app">
@@ -49,7 +49,8 @@
             <div class="filter-group">
                 <label>排序方式</label>
                 <div class="chip-group" id="sort-chips">
-                    <span class="chip active" data-sort="date">📅 拍摄日期</span>
+                    <span class="chip active" data-sort="date-desc">📅 日期 (最新)</span>
+                    <span class="chip" data-sort="date-asc">📅 日期 (最旧)</span>
                     <span class="chip" data-sort="name">🔤 文件名</span>
                     <span class="chip" data-sort="size">📦 文件大小</span>
                 </div>
@@ -65,7 +66,17 @@
                 <div class="chip-group" id="author-chips">
                     <span class="chip active" data-author="all">全部</span>
                 </div>
+            <div class="filter-group" id="tags-group" style="display: none;">
+                <label>专属标签</label>
+                <div class="chip-group" id="tags-chips">
+                    <span class="chip active" data-tag="all">全部</span>
+                </div>
             </div>
+        </div>
+        
+        <!-- Cloudflare Node Detection (Mini) -->
+        <div class="cf-node-mini" onclick="checkCFNode()" title="点击重新检测">
+            R2 CDN 命中: <span id="cf-colo-code">检测中...</span> <span id="cf-colo-city"></span>
         </div>
     </aside>
     <div id="drawer-overlay" class="overlay hidden"></div>
