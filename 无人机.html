@@ -1,0 +1,3537 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<title>无人机法规 · 练习</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+:root {
+  --bg: #f5f8fc;
+  --card: #fff;
+  --primary: #3a7bd5;
+  --accent: #5bb8f5;
+  --water: #e8f4fd;
+  --text: #2c3e50;
+  --sub: #8a9bb5;
+  --correct: #4caf93;
+  --wrong: #e06c75;
+  --border: #e4ecf5;
+  --overlay: rgba(44,62,80,.3);
+  --header-bg: rgba(255,255,255,.88);
+}
+[data-theme="dark"] {
+  --bg: #121212;
+  --card: #1e1e1e;
+  --primary: #4a90e2;
+  --accent: #63b3ed;
+  --water: #1a2635;
+  --text: #e0e0e0;
+  --sub: #8899a6;
+  --correct: #3a9679;
+  --wrong: #d35f67;
+  --border: #2c2c2c;
+  --overlay: rgba(0,0,0,.6);
+  --header-bg: rgba(30,30,30,.88);
+}
+
+html,body{
+  height:100%;
+  font-family:'Noto Sans SC','Hiragino Sans','PingFang SC',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ── top bar ── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;
+  height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  background:var(--header-bg);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  z-index:100;
+  font-size:14px;
+}
+.left-actions, .right-actions { display:flex; align-items:center; gap:8px; }
+.timer{
+  font-variant-numeric:tabular-nums;
+  color:var(--text);
+  font-weight:500;
+  font-size:15px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.icon-btn{
+  width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  border:none;background:var(--water);
+  border-radius:8px;cursor:pointer;
+  color:var(--primary);
+  transition:background .2s;
+}
+.icon-btn:active{background:var(--border)}
+.icon-btn svg{width:18px;height:18px;}
+.moon-icon{display:none;}
+[data-theme="dark"] .sun-icon{display:none;}
+[data-theme="dark"] .moon-icon{display:block;}
+
+.text-btn {
+  border:none; background:var(--primary); color:#fff;
+  padding:6px 14px; border-radius:8px; font-size:13px; font-weight:500;
+  cursor:pointer; transition:transform 0.15s, background 0.2s, color 0.2s;
+}
+.text-btn:active { transform:scale(0.95); }
+.text-btn.submitted { background:var(--water); color:var(--primary); }
+
+/* ── progress ── */
+.progress-track{
+  position:fixed;top:52px;left:0;right:0;
+  height:2px;background:var(--border);z-index:99;
+}
+.progress-bar{
+  height:100%;
+  background:linear-gradient(90deg,var(--primary),var(--accent));
+  transition:width .35s cubic-bezier(.4,0,.2,1);
+  border-radius:0 1px 1px 0;
+}
+
+/* ── main container ── */
+.main{
+  position:fixed;
+  top:54px;bottom:56px;left:0;right:0;
+  overflow:hidden;
+}
+
+/* ── slide wrapper ── */
+.slide-wrapper{
+  width:100%;height:100%;
+  position:relative;
+}
+.slide{
+  position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  padding:20px 16px 32px;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  will-change:transform,opacity;
+  transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .32s cubic-bezier(.4,0,.2,1);
+}
+.slide.center{transform:translateX(0);opacity:1}
+.slide.left{transform:translateX(-40%);opacity:0;pointer-events:none}
+.slide.right{transform:translateX(40%);opacity:0;pointer-events:none}
+
+/* ── question card ── */
+.q-num{
+  font-size:12px;
+  color:var(--sub);
+  margin-bottom:8px;
+  font-weight:400;
+  letter-spacing:.3px;
+}
+.q-stem{
+  font-size:16px;
+  line-height:1.6;
+  font-weight:500;
+  margin-bottom:24px;
+  color:var(--text);
+  word-break:break-word;
+}
+
+/* ── options ── */
+.options{display:flex;flex-direction:column;gap:12px}
+.opt{
+  position:relative;
+  display:flex;align-items:flex-start;
+  padding:14px 16px;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  cursor:pointer;
+  transition:border-color .18s,background .18s,transform .18s;
+  -webkit-user-select:none;user-select:none;
+}
+.opt:active:not(.disabled){transform:scale(.98)}
+.opt .label{
+  flex-shrink:0;
+  width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:6px;
+  background:var(--water);
+  font-size:13px;
+  font-weight:600;
+  color:var(--primary);
+  margin-right:12px;
+  transition:background .18s,color .18s;
+}
+.opt .content{
+  font-size:15px;
+  line-height:1.5;
+  padding-top:2px;
+  color:var(--text);
+}
+.opt.selected{border-color:var(--primary);background:var(--water)}
+.opt.selected .label{background:var(--primary);color:#fff}
+.opt.correct{border-color:var(--correct);background:rgba(76,175,147,0.1)}
+.opt.correct .label{background:var(--correct);color:#fff}
+.opt.wrong{border-color:var(--wrong);background:rgba(224,108,117,0.1)}
+.opt.wrong .label{background:var(--wrong);color:#fff}
+.opt.disabled{pointer-events:none}
+.opt.dimmed{opacity:.45}
+
+/* ── analysis ── */
+.analysis{
+  margin-top:20px;
+  padding:16px;
+  background:var(--water);
+  border-radius:12px;
+  font-size:14px;
+  line-height:1.7;
+  color:var(--sub);
+  display:none;
+  animation:fadeUp .3s ease-out;
+}
+.analysis.show{display:block}
+.analysis strong{color:var(--text);font-weight:600}
+
+/* ── animations ── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-6px); }
+}
+.opt.wrong.shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+@keyframes sparkle {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(76,175,147,.4); }
+  50% { transform: scale(1.03); box-shadow: 0 0 0 15px rgba(76,175,147,0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(76,175,147,0); }
+}
+.opt.correct.sparkle { animation: sparkle 0.5s ease-out both; }
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── Modals ── */
+.modal-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:var(--overlay);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  z-index:200;
+  display:none;
+  opacity:0;
+  transition:opacity .3s;
+}
+.modal-overlay.show{display:flex;}
+.modal-overlay.visible{opacity:1}
+
+/* Answer Card */
+.modal-overlay.ac-wrapper { align-items:flex-end; justify-content:center; }
+.answer-card{
+  width:100%;max-width:480px;
+  max-height:80vh;
+  background:var(--card);
+  border-radius:24px 24px 0 0;
+  padding:24px 20px 32px;
+  overflow-y:auto;
+  transform:translateY(100%);
+  transition:transform .4s cubic-bezier(.175,.885,.32,1.1);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.06);
+}
+.modal-overlay.visible .answer-card{transform:translateY(0)}
+
+.ac-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;
+}
+.ac-header h3{font-size:16px;font-weight:600;color:var(--text)}
+.ac-stats{font-size:13px;color:var(--sub)}
+.ac-close{
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  border:none;background:var(--bg);border-radius:10px;cursor:pointer;
+}
+.ac-close svg{width:16px;height:16px;color:var(--sub)}
+
+.ac-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(42px,1fr));
+  gap:10px;
+}
+.ac-cell{
+  aspect-ratio:1;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  border:1.5px solid var(--border);
+  background:var(--bg);
+  color:var(--sub);
+  transition:transform .15s,border-color .15s;
+}
+.ac-cell:active{transform:scale(.92)}
+.ac-cell.done-correct{
+  background:rgba(76,175,147,0.1);border-color:var(--correct);color:var(--correct);
+}
+.ac-cell.done-wrong{
+  background:rgba(224,108,117,0.1);border-color:var(--wrong);color:var(--wrong);
+}
+.ac-cell.current{
+  border-color:var(--primary);color:var(--primary);background:var(--water);
+}
+
+/* Dialog */
+.modal-overlay.dialog-wrapper { align-items:center; justify-content:center; }
+.dialog {
+  width: 320px;
+  background: var(--card);
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(.175,.885,.32,1.275);
+}
+.modal-overlay.visible .dialog { transform: scale(1); }
+.dialog-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+.dialog-msg { font-size: 14px; color: var(--sub); line-height: 1.6; margin-bottom: 24px; }
+.dialog-actions { display: flex; gap: 12px; }
+.dialog-btn {
+  flex: 1; padding: 12px 0; border-radius: 10px; border: none; font-size: 15px; font-weight: 500; cursor: pointer; transition: 0.2s;
+}
+.dialog-btn:active { transform: scale(0.96); }
+.dialog-btn.secondary { background: var(--water); color: var(--text); }
+.dialog-btn.primary { background: var(--primary); color: #fff; }
+
+/* Result Card */
+.modal-overlay.result-wrapper { align-items:center; justify-content:center; }
+.result-card {
+  width: 90%; max-width: 340px;
+  background: var(--card);
+  border-radius: 24px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(.175,.885,.32,1.275);
+}
+.modal-overlay.visible .result-card { transform: scale(1); }
+.score-title { font-size: 16px; color: var(--sub); font-weight: 500; }
+.score-val { font-size: 80px; font-weight: 700; color: var(--primary); margin: 8px 0; line-height: 1; font-family: system-ui, -apple-system, sans-serif; letter-spacing: -2px;}
+.score-stats { font-size: 14px; color: var(--sub); margin-bottom: 32px; background:var(--bg); padding:10px; border-radius:12px; }
+.res-btn {
+  width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 15px; font-weight: 500; cursor: pointer; margin-bottom: 12px; transition: 0.2s;
+}
+.res-btn:active { transform: scale(0.97); }
+.res-btn.primary { background: var(--primary); color: #fff; }
+.res-btn.outline { background: transparent; border: 1.5px solid var(--primary); color: var(--primary); }
+.res-btn.secondary { background: var(--water); color: var(--text); margin-bottom: 0; }
+
+
+/* ── bottom nav ── */
+.bottombar{
+  position:fixed;bottom:0;left:0;right:0;
+  height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  background:var(--header-bg);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  z-index:50;
+}
+.nav-btn{
+  display:flex;align-items:center;gap:4px;
+  border:none;background:none;
+  font-size:14px;font-weight:500;color:var(--text);
+  cursor:pointer;
+  padding:8px 12px;
+  border-radius:8px;
+  transition:background .15s,color .15s;
+  font-family:inherit;
+}
+.nav-btn:active{background:var(--water)}
+.nav-btn svg{width:18px;height:18px}
+.nav-btn.disabled{opacity:.3;pointer-events:none}
+.counter{
+  font-size:14px;color:var(--sub);
+  font-variant-numeric:tabular-nums;
+  font-weight:500;
+}
+
+/* ── scrollbar ── */
+.slide::-webkit-scrollbar{width:0}
+.answer-card::-webkit-scrollbar{width:4px}
+.answer-card::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── safe area ── */
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  .bottombar{padding-bottom:env(safe-area-inset-bottom);height:calc(56px + env(safe-area-inset-bottom))}
+  .main{bottom:calc(56px + env(safe-area-inset-bottom))}
+  .modal-overlay .answer-card{padding-bottom:calc(32px + env(safe-area-inset-bottom))}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="left-actions">
+    <button class="icon-btn" id="cardBtn" aria-label="答题卡">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="themeBtn" aria-label="切换主题">
+      <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+  <span class="timer" id="timer">00:00</span>
+  <div class="right-actions">
+    <button class="text-btn" id="submitBtn">交卷</button>
+  </div>
+</header>
+
+<div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="main">
+  <div class="slide-wrapper" id="slideWrapper"></div>
+</div>
+
+<nav class="bottombar">
+  <button class="nav-btn" id="prevBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    上一题
+  </button>
+  <span class="counter" id="counter"></span>
+  <button class="nav-btn" id="nextBtn">
+    下一题
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+  </button>
+</nav>
+
+<!-- Answer Card Modal -->
+<div class="modal-overlay ac-wrapper" id="cardOverlay">
+  <div class="answer-card">
+    <div class="ac-header">
+      <h3>答题卡</h3>
+      <span class="ac-stats" id="acStats"></span>
+      <button class="ac-close" id="acClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="ac-grid" id="acGrid"></div>
+  </div>
+</div>
+
+<!-- Dialog Modal -->
+<div class="modal-overlay dialog-wrapper" id="dialogOverlay">
+  <div class="dialog">
+    <div class="dialog-title" id="dialogTitle">提示</div>
+    <div class="dialog-msg" id="dialogMsg"></div>
+    <div class="dialog-actions">
+      <button class="dialog-btn secondary" id="dialogCancel">取消</button>
+      <button class="dialog-btn primary" id="dialogConfirm">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- Result Modal -->
+<div class="modal-overlay result-wrapper" id="resultOverlay">
+  <div class="result-card">
+    <h2 class="score-title">本次得分</h2>
+    <div class="score-val" id="scoreVal">0</div>
+    <div class="score-stats" id="scoreStats">用时: 00:00 | 错题: 0 | 未做: 0</div>
+    <div class="result-actions">
+      <button class="res-btn outline" id="reviewBtn">查看复盘</button>
+      <button class="res-btn primary" id="redoWrongBtn">补做错题</button>
+      <button class="res-btn secondary" id="restartBtn">全新练习</button>
+    </div>
+  </div>
+</div>
+
+<script id="questionData" type="application/json">
+{
+  "source": "https://appbc1asgqf6173.h5.xet.pomoho.com/p/t/v1/exam/h5_evaluation/practice/answer/wb_62077e7a613b4_Ob6ZKQra",
+  "title": "理论：无人机法律法规（优先）",
+  "total": 109,
+  "questions": [
+    {
+      "id": 1,
+      "type": "单选题",
+      "stem": "小型无人机，是指空机质量小于等于（ ）千克的无人机，微型和轻型无人机除外",
+      "options": [
+        {
+          "label": "A",
+          "content": "116"
+        },
+        {
+          "label": "B",
+          "content": "5700"
+        },
+        {
+          "label": "C",
+          "content": "1260"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "C",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "75%",
+      "analysis": "无人机空机质量微型 ≤ 7kg（100 km/h、3000 米）\n轻型 >7kg, ≤ 116kg\n小型 >116kg, ≤ 5700kg\n大型无人机 >5700kg"
+    },
+    {
+      "id": 2,
+      "type": "单选题",
+      "stem": "下列情况下，无人机系统驾驶员由局方实施管理",
+      "options": [
+        {
+          "label": "A",
+          "content": "在融合空域运行的轻型无人机"
+        },
+        {
+          "label": "B",
+          "content": "在融合空域运行的小型无人机"
+        },
+        {
+          "label": "C",
+          "content": "在隔离空域内超视距运行的无人机"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "C",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "53%",
+      "analysis": "根据《民用无人驾驶航空器系统驾驶员管理暂行规定》第五条：\n下列情况下，无人机系统驾驶员由局方实施管理：\n①．在融合空域运行的小型无人机；\n②．在融合空域运行的大型无人机； ③．充气体积在 4，600 立方米以上的遥控飞艇。"
+    },
+    {
+      "id": 3,
+      "type": "单选题",
+      "stem": "航空器飞离机场加入航路、航线和脱离航路、航线飞向机场，应当（ ）规定的航线和高度上升或者下降",
+      "options": [
+        {
+          "label": "A",
+          "content": "按照该机场使用细则"
+        },
+        {
+          "label": "B",
+          "content": "公布的进离场程序"
+        },
+        {
+          "label": "C",
+          "content": "按照该机场使用细则或者进离场程序"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "C",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "92%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第四章 区域内飞行\n第五十二条：航空器飞离机场加入航路、航线和脱离航路、航线飞向机场，应当按照该机场使用细则或者进离场程序规定的航线和高度上升或者下降。"
+    },
+    {
+      "id": 4,
+      "type": "单选题",
+      "stem": "起飞时间（陆上）的含义是指",
+      "options": [
+        {
+          "label": "A",
+          "content": "航空器开始起飞滑跑轮子转动的瞬间"
+        },
+        {
+          "label": "B",
+          "content": "航空器起飞滑跑抬前轮的瞬间"
+        },
+        {
+          "label": "C",
+          "content": "航空器进入跑道对正起飞方向的瞬间"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "C",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "80%",
+      "analysis": "根据《中国民用航空飞行规则》第四章 飞行组织与实施\n起飞时间，是指航空器开始起飞滑跑轮子移动的瞬间"
+    },
+    {
+      "id": 5,
+      "type": "单选题",
+      "stem": "从事飞行的民用航空器不需要携带的文件是",
+      "options": [
+        {
+          "label": "A",
+          "content": "飞行人员相应的执照或合格证"
+        },
+        {
+          "label": "B",
+          "content": "飞行记录薄"
+        },
+        {
+          "label": "C",
+          "content": "民用航空器适航证书"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "B",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "90%",
+      "analysis": "飞行记录本可以在飞行任务结束后再进行填写，无需随身携带。"
+    },
+    {
+      "id": 6,
+      "type": "单选题",
+      "stem": "每个飞行教员必须将CCAR61部要求的记录保存",
+      "options": [
+        {
+          "label": "A",
+          "content": "一年"
+        },
+        {
+          "label": "B",
+          "content": "三年"
+        },
+        {
+          "label": "C",
+          "content": "五年"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "C",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "80%",
+      "analysis": "根据《民用航空器驾驶员和飞行教员合格审定规则》 第八十条  〔飞行教员记录〕      (一)  飞行教员均应在接受其飞行或地面教学的每个人的飞行经历记录本上签字，并注明给予教学的时间、数量、日期和内容。另外，在飞行教员记录本或单独文件中记录下列内容：      1  在飞行经历记录本或飞行学员合格证签字而授予单飞权利的每个人姓名。记录必须包括每次签字的型别和日期。      2  出具证明让其参加笔试、飞行考试的每个人姓名，包括考试的种类，签署证明的日期和考试的结果。      (二)  本条要求的记录必须由飞行教员单独地或在其记录本中保存至少三年"
+    },
+    {
+      "id": 7,
+      "type": "单选题",
+      "stem": "《中国民用航空法》中“航空人员”是指从事民用航空活动的",
+      "options": [
+        {
+          "label": "A",
+          "content": "空勤人员"
+        },
+        {
+          "label": "B",
+          "content": "空勤人员和地面人员"
+        },
+        {
+          "label": "C",
+          "content": "飞行人员和地面人员"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "B",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "77%",
+      "analysis": "第三十九条 本法所称航空人员，是指下列从事民用航空活动的空勤人员和地面人员：\n（一）空勤人员，包括驾驶员、领航员、飞行机械人员、飞行通信员、乘务员；\n（二）地面人员，包括民用航空器维修人员、空中交通管制员、飞行签派员、航空电台通信员。"
+    },
+    {
+      "id": 8,
+      "type": "单选题",
+      "stem": "CCAR61部授权的执照或合格证持有人在理论考试中作弊或发生其他禁止行为，局方（授权方）拒绝其任何执照、合格证或等级申请期限为",
+      "options": [
+        {
+          "label": "A",
+          "content": "一年"
+        },
+        {
+          "label": "B",
+          "content": "半年"
+        },
+        {
+          "label": "C",
+          "content": "视其违规的情节轻重而定"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "85%",
+      "analysis": "根据《民用航空器驾驶员和飞行教员合格审定规则》第八十八条 笔试中作弊或其他不允许的行为及其处罚，该次考试无效，并在该行为发生之日起一年期间内，不接受其任何执照、合格证或等级的申请"
+    },
+    {
+      "id": 9,
+      "type": "单选题",
+      "stem": "飞行任务书是许可飞行人员进行转场飞行和民用航空飞行的基本文件。飞行任务书由（ ）签发",
+      "options": [
+        {
+          "label": "A",
+          "content": "驻机场航空单位或者航空公司的调度或签派部门"
+        },
+        {
+          "label": "B",
+          "content": "驻机场航空单位或者航空公司的负责人"
+        },
+        {
+          "label": "C",
+          "content": "驻机场航空单位或者航空公司的运行管理部门"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "B",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "64%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第五章    航路和航线飞行 第67条\n飞行任务书是许可飞行人员进行转场飞行和民用航空飞行的基本文件。飞行任务书由驻机场航空单位或者航空公司的负责人签发。"
+    },
+    {
+      "id": 10,
+      "type": "单选题",
+      "stem": "民用无人驾驶航空器系统机长合格证申请人必须在民用无人驾驶航空器系统上训练不少于多少小时的飞行训练时间",
+      "options": [
+        {
+          "label": "A",
+          "content": "56"
+        },
+        {
+          "label": "B",
+          "content": "44"
+        },
+        {
+          "label": "C",
+          "content": "100"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "69%",
+      "analysis": "根据《民用无人机驾驶员管理规定》编 号：AC-61-FS-2018-20R2\n\n中的第2.1.4 飞行经历要求\n\n超视距等级驾驶员执照的申请人应当具有操纵有动力\n\n的无人机至少 56 小时的飞行经历时间，其中包括\n\n（a）按照本规定 2.1.3 条的飞行技能要求，对于多旋\n\n翼类别超视距等级驾驶员执照申请人，由授权教员提供不少\n\n于 15 小时带飞训练，不少于 5 小时单飞训练，计入驾驶员\n\n飞行经历的飞行模拟训练时间不多于 28 小时；"
+    },
+    {
+      "id": 11,
+      "type": "单选题",
+      "stem": "民用航空器因故确需偏离指定的航路或者改变飞行高度飞行时，应当首先",
+      "options": [
+        {
+          "label": "A",
+          "content": "得到机长的允许"
+        },
+        {
+          "label": "B",
+          "content": "取得机组的一致同意"
+        },
+        {
+          "label": "C",
+          "content": "取得空中交通管制单位的许可"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "C",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "93%",
+      "analysis": "在管理空域中飞行，飞行器的水平和垂直方向间隔构成空中交通管理的基础，由空中交通管制单位管理。"
+    },
+    {
+      "id": 12,
+      "type": "单选题",
+      "stem": "旋翼机可以在距离障碍物10米以外,1～10米的高度上飞移,但飞移速度不得超过",
+      "options": [
+        {
+          "label": "A",
+          "content": "10公里/小时"
+        },
+        {
+          "label": "B",
+          "content": "15公里/小时"
+        },
+        {
+          "label": "C",
+          "content": "20公里/小时"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "C",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "66%",
+      "analysis": "根据《中国民用航空飞行规则》第五章    机场区域内飞行\n第91条    航空器起动滑行（牵引）规定：\n（八）直升机可以在距离障碍物10米以外，1-10米的高度上飞移，飞移速度不得超过15公里／小时。"
+    },
+    {
+      "id": 13,
+      "type": "单选题",
+      "stem": "在融合空域运行的充气体积在4，600立方米以上的遥控飞艇驾驶员，应至少持有",
+      "options": [
+        {
+          "label": "A",
+          "content": "飞艇私照"
+        },
+        {
+          "label": "B",
+          "content": "飞艇商照"
+        },
+        {
+          "label": "C",
+          "content": "热气球商照"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "B",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "83%",
+      "analysis": "根据《民用无人驾驶航空器系统驾驶员管理暂行规定》第七条：在融合空域运行的充气体积在 4，600 立方米以上的遥控飞艇驾驶员，应至少持有带有飞艇等级的商用驾驶员执照。"
+    },
+    {
+      "id": 14,
+      "type": "单选题",
+      "stem": "在融合空域3，000米以下运行的小型无人机驾驶员，应至少持有",
+      "options": [
+        {
+          "label": "A",
+          "content": "航线运输执照"
+        },
+        {
+          "label": "B",
+          "content": "私照"
+        },
+        {
+          "label": "C",
+          "content": "商照"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "71%",
+      "analysis": "根据《民用无人驾驶航空器系统驾驶员管理暂行规定》第七条：\n在融合空域 3，000 米以下运行的小型无人机驾驶员，应至少持有私用驾驶员执照（仅带有轻于空气航空器等级的除外）。"
+    },
+    {
+      "id": 15,
+      "type": "单选题",
+      "stem": "在飞行任务书中，应当明确",
+      "options": [
+        {
+          "label": "A",
+          "content": "飞行任务、起飞时间、航线、高度、允许机长飞行的最低气象条件以及其他有关事项"
+        },
+        {
+          "label": "B",
+          "content": "飞行任务、机组成员﹑起飞时间、航线、高度、允许机长飞行的最低气象条件以及其他有关事项"
+        },
+        {
+          "label": "C",
+          "content": "飞行任务、起飞时间、航线、允许机长飞行的最低气象条件以及其他有关事项"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "68%",
+      "analysis": "《中华人民共和国飞行基本规则》第五章    航路和航线飞行 第67条：在飞行任务书中，应当明确飞行任务、起飞时间、航线、高度、允许机长飞行的最低气象条件以及其他有关事项。"
+    },
+    {
+      "id": 16,
+      "type": "单选题",
+      "stem": "关于“民用航空器国籍”正确的是",
+      "options": [
+        {
+          "label": "A",
+          "content": "民用航空器可以不进行国籍登记而投入运行"
+        },
+        {
+          "label": "B",
+          "content": "民用航空器只能具有一国国籍"
+        },
+        {
+          "label": "C",
+          "content": "自外国租赁的民用航空器不能申请我国国籍"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "90%",
+      "analysis": "《中国民用航空法》第九条：民用航空器不得具有双重国籍。未注销外国国籍的民用航空器不得在中华人民共和国申请国籍登记。"
+    },
+    {
+      "id": 17,
+      "type": "单选题",
+      "stem": "飞行高度层应当根据（ ）配备",
+      "options": [
+        {
+          "label": "A",
+          "content": "航线或航路走向、航空器性能、飞行区域以及航线的地形、天气和飞行情况等"
+        },
+        {
+          "label": "B",
+          "content": "飞行任务的性质、航空器等级、飞行区域以及航线的地形、天气和飞行情况等"
+        },
+        {
+          "label": "C",
+          "content": "飞行任务的性质、航空器性能、飞行区域以及航线的地形、天气和飞行情况等"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "58%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第六章    飞行间隔第84条：飞行高度层应当根据飞行任务的性质、航空器性能、飞行区域以及航线的地形、天气和飞行情况等配备。"
+    },
+    {
+      "id": 18,
+      "type": "单选题",
+      "stem": "对于接入无人机云系统的用户，无须：①向相关部门了解限制区域的划设情况，包括机场障碍物控制面、飞行禁区、未经批准的限制区以及危险区等；②机身需有明确的标识，注明该无人机的型号、编号、所有者、联系方式等信息，以便出现坠机情况时能迅速查找到无人机所有者或操作者信息③运行前需要提前向管制部门提出申请，并提供有效监视手段④运营人按照CCAR-91部的要求，进行合格审定",
+      "options": [
+        {
+          "label": "A",
+          "content": "①②③"
+        },
+        {
+          "label": "B",
+          "content": "①③④"
+        },
+        {
+          "label": "C",
+          "content": "①②③④"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "95%",
+      "analysis": ""
+    },
+    {
+      "id": 19,
+      "type": "单选题",
+      "stem": "无人机飞行人员在执行飞行任务时，应当随身携带",
+      "options": [
+        {
+          "label": "A",
+          "content": "飞行记录本"
+        },
+        {
+          "label": "B",
+          "content": "飞机适航证书"
+        },
+        {
+          "label": "C",
+          "content": "驾驶员执照或合格证"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "89%",
+      "analysis": "根据CCAR-61要求，无人机飞行人员在执行飞行任务时，应当随身携带驶员执照或合格证。"
+    },
+    {
+      "id": 20,
+      "type": "单选题",
+      "stem": "旋翼机在停机坪上起飞和着陆时,距离其他航空器或者障碍物的水平距离不少于",
+      "options": [
+        {
+          "label": "A",
+          "content": "10米"
+        },
+        {
+          "label": "B",
+          "content": "20米"
+        },
+        {
+          "label": "C",
+          "content": "25米"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "70%",
+      "analysis": "根据《中国民用航空飞行规则》第五章    机场区域内飞行\n第91条    航空器起动滑行（牵引）规定：\n（八）直升机可以在距离障碍物10米以外，1-10米的高度上飞移，飞移速度不得超过15公里／小时。"
+    },
+    {
+      "id": 21,
+      "type": "单选题",
+      "stem": "下列航空法律法规中级别最高的是",
+      "options": [
+        {
+          "label": "A",
+          "content": "《中华人民共和国飞行基本规则》"
+        },
+        {
+          "label": "B",
+          "content": "《中华人民共和国民用航空法》"
+        },
+        {
+          "label": "C",
+          "content": "《中华人民共和国搜寻援救民用航空器的规定》"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "89%",
+      "analysis": "中华人民共和国全国人民代表大会是最高国家权力机关。全国人民代表大会和全国人民代表大会常务委员会行使国家立法权。所以全国人民代表大会制定的《中华人民共和国民用航空法》级别最高。"
+    },
+    {
+      "id": 22,
+      "type": "单选题",
+      "stem": "云外绕飞雷雨时,航空器距离积雨云、浓积云昼间不得少于",
+      "options": [
+        {
+          "label": "A",
+          "content": "5公里"
+        },
+        {
+          "label": "B",
+          "content": "10公里"
+        },
+        {
+          "label": "C",
+          "content": "15公里"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "63%",
+      "analysis": "根据《中国民用航空飞行规则》第八章    复杂条件下的飞行：雷雨活动区飞行\n（三）只准在安全高度以上，偏离航线不超过导航设施的有效半径范围内绕飞（有惯性导航设备的航空器除外）；云外绕飞时，距离积雨云（浓积云）昼间不得少于５公里，夜间不得少于１０公里；两个云体之间不少于２０公里时，方可从中间通过；"
+    },
+    {
+      "id": 23,
+      "type": "单选题",
+      "stem": "下列说法正确的是",
+      "options": [
+        {
+          "label": "A",
+          "content": "飞行教员不得为获得CCAR61部要求的执照、合格证、等级、运行许可、实践考试或者理论考试权利而为自己进行任何签字"
+        },
+        {
+          "label": "B",
+          "content": "除非具有局方委任的监察员或考试员资格，否则飞行教员不得为获得CCAR61部要求的执照、合格证、等级、运行许可、实践考试或者理论考试权利而为自己进行任何签字"
+        },
+        {
+          "label": "C",
+          "content": "当存在特殊的情况或条件限制时，在获得特别授权和批准后，飞行教员可以为获得CCAR61部要求的执照、合格证、等级、运行许可、实践考试或者理论考试权利而为自己进行签字"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "78%",
+      "analysis": "任何情况下，飞行教员都不能为自己进行签字。"
+    },
+    {
+      "id": 24,
+      "type": "单选题",
+      "stem": "飞行教员合格证申请人必须年满",
+      "options": [
+        {
+          "label": "A",
+          "content": "18周岁"
+        },
+        {
+          "label": "B",
+          "content": "20周岁"
+        },
+        {
+          "label": "C",
+          "content": "21周岁"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "97%",
+      "analysis": "根据《民用航空驾驶员和教员合格审定规则》第八章  飞行教员合格证  第七十六条 年龄要求至少年满18周岁，最大不得超过60周岁。"
+    },
+    {
+      "id": 25,
+      "type": "单选题",
+      "stem": "对飞行教员合格证申请人的知识要求为",
+      "options": [
+        {
+          "label": "A",
+          "content": "教学原理，所申请飞行教员合格证航空器类别的驾驶员、驾驶员机长合格证要求的航空知识，及所申请飞行教员合格证等级要求的航空知识"
+        },
+        {
+          "label": "B",
+          "content": "教学原理，所申请飞行教员合格证航空器类别的驾驶员、商用和航线驾驶员执照要求的航空知识，及所申请飞行教员执照航空器类别的仪表等级要求的航空知识"
+        },
+        {
+          "label": "C",
+          "content": "教学原理，所申请飞行教员执照航空器类别的私用、商用和航线驾驶员执照要求的航空知识"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "78%",
+      "analysis": "根据《民用航空器驾驶员和飞行教员合格审定规则》 第八章飞行教员合格证 第78条 (一)  航空知识： \n1申请人必须完成理论科目的培训。 2所申请飞行教员合格证航空器类别的驾驶员、驾驶员机长合格证要求的航空知识，及所申请飞行教员合格证等级要求的航空知识"
+    },
+    {
+      "id": 26,
+      "type": "单选题",
+      "stem": "无人机的英文缩写是",
+      "options": [
+        {
+          "label": "A",
+          "content": "UVS"
+        },
+        {
+          "label": "B",
+          "content": "UA.S"
+        },
+        {
+          "label": "C",
+          "content": "UA.V"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "81%",
+      "analysis": ""
+    },
+    {
+      "id": 27,
+      "type": "单选题",
+      "stem": "《中华人民共和国民用航空法》自( )起施行",
+      "options": [
+        {
+          "label": "A",
+          "content": "1996年1月1日"
+        },
+        {
+          "label": "B",
+          "content": "1996年3月1日"
+        },
+        {
+          "label": "C",
+          "content": "1997年1月1日"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "82%",
+      "analysis": "《中华人民共和国民用航空法》由第八届全国人大代表大会常务委员会第十六次会议1995年10月30日经审议通过，自1996年3月1日实施。当前版本是2015年4月24日第十二届全国人民代表大会常务委员会第十四次会议全国人民代表大会常务委员会修正。"
+    },
+    {
+      "id": 28,
+      "type": "单选题",
+      "stem": "民用航空器必须具有民航局颁发的( )方可飞行",
+      "options": [
+        {
+          "label": "A",
+          "content": "适航证"
+        },
+        {
+          "label": "B",
+          "content": "经营许可证"
+        },
+        {
+          "label": "C",
+          "content": "机场使用许可证"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "91%",
+      "analysis": "《中华人民共和国民用航空法》第三十七条： 具有中华人民共和国国籍的民用航空器，应当持有国务院民用航空主管部门颁发的适航证书，方可飞行。"
+    },
+    {
+      "id": 29,
+      "type": "单选题",
+      "stem": "民用航空器的适航管理由( )负责",
+      "options": [
+        {
+          "label": "A",
+          "content": "民航局"
+        },
+        {
+          "label": "B",
+          "content": "国务院"
+        },
+        {
+          "label": "C",
+          "content": "中央军委"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "55%",
+      "analysis": "《中华人民共和国民用航空法》第三十七条：民用航空器适航管理规定，由国务院制定。"
+    },
+    {
+      "id": 30,
+      "type": "单选题",
+      "stem": "对于Ⅰ、Ⅱ级别无人机系统驾驶员：",
+      "options": [
+        {
+          "label": "A",
+          "content": "无须证照管理，自行负责"
+        },
+        {
+          "label": "B",
+          "content": "人员资质由局方负责管理"
+        },
+        {
+          "label": "C",
+          "content": "人员资质由行业协会负责管理"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "",
+      "analysis": ""
+    },
+    {
+      "id": 31,
+      "type": "单选题",
+      "stem": "飞行高度层应当根据（ ）计算",
+      "options": [
+        {
+          "label": "A",
+          "content": "标准大气压条件下平均平面"
+        },
+        {
+          "label": "B",
+          "content": "标准大气压条件下假定海平面"
+        },
+        {
+          "label": "C",
+          "content": "实际大气压条件下假定海平面"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "82%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第六章    飞行间隔第80条：（三）飞行高度层应当根据标准大气压条件下假定海平面计算。真航线角应当从航线起点和转弯点量取。"
+    },
+    {
+      "id": 32,
+      "type": "单选题",
+      "stem": "中空飞行,按照飞行高度区分为",
+      "options": [
+        {
+          "label": "A",
+          "content": "100米(含)至4500米(含)"
+        },
+        {
+          "label": "B",
+          "content": "1000米(含)至5400米(含)"
+        },
+        {
+          "label": "C",
+          "content": "1000米(含)至6000米(不含)"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "85%",
+      "analysis": "根据《中国民用航空飞行规则》第19条    飞行分类：\n（六）按照飞行高度划分：\n超低空飞行    距离地面或者水面100米以下；\n低空飞行    距离地面或者水面100米（含）至1000米；\n中空飞行    1000米（含）至6000米；\n高空飞行    6000米（含）至12000类；    平流层飞行    12000米（不含）以上"
+    },
+    {
+      "id": 33,
+      "type": "单选题",
+      "stem": "下列说法中，哪一种对无人机教员合格证申请人的要求是必要的",
+      "options": [
+        {
+          "label": "A",
+          "content": "具备无人机应急处理程序方面的技术"
+        },
+        {
+          "label": "B",
+          "content": "在所申请的无人机上担任机长经历时间多于100小时"
+        },
+        {
+          "label": "C",
+          "content": "在所申请的无人机上飞行经历不少于100小时"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "73%",
+      "analysis": "无人机教员合格证申请人在所申请的无人机上担任机长经历时间多于100小时"
+    },
+    {
+      "id": 34,
+      "type": "单选题",
+      "stem": "训练时间，是指受训人在下列方面从授权教员处接受训练的时间",
+      "options": [
+        {
+          "label": "A",
+          "content": "飞行中"
+        },
+        {
+          "label": "B",
+          "content": "地面上、飞行模拟机或飞行训练器上"
+        },
+        {
+          "label": "C",
+          "content": "飞行中、地面上，飞行模拟机或飞行练习器上"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "90%",
+      "analysis": "训练时间包括：飞行中、地面上，飞行模拟机或飞行练习器上"
+    },
+    {
+      "id": 35,
+      "type": "单选题",
+      "stem": "执行昼间专业任务的航空器,在山区进行作业飞行时,着陆时间最晚不得晚于日落前",
+      "options": [
+        {
+          "label": "A",
+          "content": "10分钟；"
+        },
+        {
+          "label": "B",
+          "content": "15分钟；"
+        },
+        {
+          "label": "C",
+          "content": "20分钟"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "62%",
+      "analysis": "根据《中国民用航空飞行规则》第七章通用航空飞行  \n第122条    在昼间和拂晓进行作业飞行时，应当根据任务性质、作业地区地形确定每天开始和结束飞行的时间。只有在能够清楚地看到地标和能够目视判断作业飞行高度的情况下，方可起飞，但不得早于日出前30分钟（山区日出前20分钟）；着陆时间不得晚于日落时间（山区日落前15分钟）"
+    },
+    {
+      "id": 36,
+      "type": "单选题",
+      "stem": "飞行教员不需要在飞行教员记录本或单独文件中记录的内容为",
+      "options": [
+        {
+          "label": "A",
+          "content": "由该教员在飞行经历记录本或者在学生驾驶员执照上签字而被授予单飞权利的每个人的姓名，包括每次签字的日期以及所涉及的航空器型号"
+        },
+        {
+          "label": "B",
+          "content": "教学的内容、课时﹑日期和航空器型号"
+        },
+        {
+          "label": "C",
+          "content": "由该教员签字推荐参加理论考试或者实践考试的每个人的姓名，包括考试的种类、日期和考试结果"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "69%",
+      "analysis": "根据《民用航空器驾驶员和飞行教员合格审定规则》 第八十条  〔飞行教员记录〕      (一)  飞行教员均应在接受其飞行或地面教学的每个人的飞行经历记录本上签字，并注明给予教学的时间、数量、日期和内容。另外，在飞行教员记录本或单独文件中记录下列内容：      1  在飞行经历记录本或飞行学员合格证签字而授予单飞权利的每个人姓名。记录必须包括每次签字的型别和日期。      2  出具证明让其参加笔试、飞行考试的每个人姓名，包括考试的种类，签署证明的日期和考试的结果。"
+    },
+    {
+      "id": 37,
+      "type": "单选题",
+      "stem": "在中华人民共和国境内飞行的航空器必须遵守统一的飞行规则，该飞行规则应当由( )制定",
+      "options": [
+        {
+          "label": "A",
+          "content": "民用航空局和中央军委"
+        },
+        {
+          "label": "B",
+          "content": "中央军委"
+        },
+        {
+          "label": "C",
+          "content": "国务院和中央军委"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "83%",
+      "analysis": "《中华人民共和国民用航空法》第七十六条 在中华人民共和国境内飞行的航空器，必须遵守统一的飞行规则。该飞行规则由国务院、中央军事委员会制定。"
+    },
+    {
+      "id": 38,
+      "type": "单选题",
+      "stem": "降落时间的含义是指",
+      "options": [
+        {
+          "label": "A",
+          "content": "航空器接地的瞬间"
+        },
+        {
+          "label": "B",
+          "content": "航空器着陆后前轮接地的瞬间"
+        },
+        {
+          "label": "C",
+          "content": "航空器着陆滑跑终止的瞬间"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "78%",
+      "analysis": "根据《中国民用航空飞行规则》第四章 飞行组织与实施\n着陆时间，是指航空器着陆滑跑终止的瞬间。"
+    },
+    {
+      "id": 39,
+      "type": "单选题",
+      "stem": "航空器使用航路和航线，应当经（ ）同意",
+      "options": [
+        {
+          "label": "A",
+          "content": "负责该航路和航线的飞行管制部门"
+        },
+        {
+          "label": "B",
+          "content": "空中交通管理局下属的区域管制部门"
+        },
+        {
+          "label": "C",
+          "content": "中国人民解放军空军"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "62%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第五章    航路和航线飞行 第64条\n航空器使用航路和航线，应当经负责该航路和航线的飞行管制部门同意。"
+    },
+    {
+      "id": 40,
+      "type": "单选题",
+      "stem": "超低空飞行,按照飞行高度区分为",
+      "options": [
+        {
+          "label": "A",
+          "content": "距地面或水面50米以下"
+        },
+        {
+          "label": "B",
+          "content": "距地面或水面100米以下"
+        },
+        {
+          "label": "C",
+          "content": "距地面或水面5米至100米"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "77%",
+      "analysis": "根据《中国民用航空飞行规则》第19条    飞行分类：\n（六）按照飞行高度划分：\n超低空飞行    距离地面或者水面100米以下；    \n低空飞行    距离地面或者水面100米（含）至1000米；\n中空飞行    1000米（含）至6000米；\n高空飞行    6000米（含）至12000类；    平流层飞行    12000米（不含）以上"
+    },
+    {
+      "id": 41,
+      "type": "单选题",
+      "stem": "在管制机场附近的所有航空器,以及在地面的航空器都服从____的指令。",
+      "options": [
+        {
+          "label": "A",
+          "content": "管制员"
+        },
+        {
+          "label": "B",
+          "content": "机务人员"
+        },
+        {
+          "label": "C",
+          "content": "机长"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "87%",
+      "analysis": "机场管制塔台对机场上和在机场区内所规定的空域内起飞和降落的飞机进行管制。"
+    },
+    {
+      "id": 42,
+      "type": "单选题",
+      "stem": "在融合空域运行的大型无人机驾驶员，应至少持有带 有飞机或直升机等级",
+      "options": [
+        {
+          "label": "A",
+          "content": "商用驾驶员执照和仪表等级"
+        },
+        {
+          "label": "B",
+          "content": "私照"
+        },
+        {
+          "label": "C",
+          "content": "商照"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "",
+      "analysis": ""
+    },
+    {
+      "id": 43,
+      "type": "单选题",
+      "stem": "飞行人员未按规定履行职责的，由有关部门依法给予行政处分或者纪律处分；情节严重的，依法给予吊扣执照或合格证（ ）的处罚，或者责令停飞（ ）",
+      "options": [
+        {
+          "label": "A",
+          "content": "半年，一至三个月"
+        },
+        {
+          "label": "B",
+          "content": "一至三个月，半年"
+        },
+        {
+          "label": "C",
+          "content": "一至六个月，一至三个月"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "76%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第十一章法律责任 第一百一十八条\n飞行人员未按本规则规定履行职责的，由有关部门依法给予行政处分或者纪律处分；情节严重的，依法给予吊扣执照一个月至六个月的处罚，或者责令停飞一个月至三个月；构成犯罪的，依法追究刑事责任。"
+    },
+    {
+      "id": 44,
+      "type": "单选题",
+      "stem": "航空器进行空域飞行时，应当按照规定的（ ）进入空域或者脱离空域，并且保持在规定的空域和高度范围内飞行",
+      "options": [
+        {
+          "label": "A",
+          "content": "航线（航向）、高度、次序和进出点"
+        },
+        {
+          "label": "B",
+          "content": "航线（航向）、高度、次序"
+        },
+        {
+          "label": "C",
+          "content": "航线（航向）、高度"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "62%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第四章 区域内飞行\n第五十四条：航空器进行空域飞行时，应当按照规定的航线（航向）、高度、次序进入空域或者脱离空域，并且保持在规定的空域和高度范围内飞行。"
+    },
+    {
+      "id": 45,
+      "type": "单选题",
+      "stem": "飞行的组织与实施包括",
+      "options": [
+        {
+          "label": "A",
+          "content": "飞行预先准备、飞行直接准备、飞行实施和飞行讲评四个阶段."
+        },
+        {
+          "label": "B",
+          "content": "飞行直接准备、飞行实施和飞行讲评三个阶段；"
+        },
+        {
+          "label": "C",
+          "content": "飞行预先准备,飞行准备和飞行实施三个阶段"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "87%",
+      "analysis": "根据《中国民用航空飞行规则》飞行的组织与实施包括：飞行预先准备、飞行直接准备、飞行实施和飞行讲评四个阶段."
+    },
+    {
+      "id": 46,
+      "type": "单选题",
+      "stem": "空域通常划分为以下哪几项：①机场飞行空域 ②航路、航线 ③空中禁区、空中限制区和空中危险区。",
+      "options": [
+        {
+          "label": "A",
+          "content": "①②"
+        },
+        {
+          "label": "B",
+          "content": ".①③"
+        },
+        {
+          "label": "C",
+          "content": "①②③"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "65%",
+      "analysis": "飞行情报区、空中交通服务空域、 禁航区、限制区和危险区。"
+    },
+    {
+      "id": 47,
+      "type": "单选题",
+      "stem": "获准飞出或者飞入中华人民共和国领空的航空器，实施飞出或者飞入中华人民共和国领空的飞行和各飞行管制区间的飞行",
+      "options": [
+        {
+          "label": "A",
+          "content": "必须经相关管制单位批准"
+        },
+        {
+          "label": "B",
+          "content": "必须经中国人民解放军空军批准"
+        },
+        {
+          "label": "C",
+          "content": "必须经由国务院﹑中央军委空中交通管制委员会批准"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "66%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第三十五条\n所有飞行必须预先提出申请，经批准后方可实施。获准飞出或者飞入中华人民共和国领空的航空器，实施飞出或者飞入中华人民共和国领空的飞行和各飞行管制区间的飞行，必须经中国人民解放军空军批准。"
+    },
+    {
+      "id": 48,
+      "type": "单选题",
+      "stem": "何种无人机须安装使用电子围栏",
+      "options": [
+        {
+          "label": "A",
+          "content": "Ⅲ，Ⅳ，Ⅵ，Ⅶ类无人机及重点地区和机场净空区以下进行Ⅱ，Ⅴ类无人机"
+        },
+        {
+          "label": "B",
+          "content": "Ⅲ，Ⅳ，Ⅵ，Ⅶ类无人机"
+        },
+        {
+          "label": "C",
+          "content": "Ⅱ，Ⅲ，Ⅳ，Ⅴ，Ⅵ，Ⅶ类无人机"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "87%",
+      "analysis": ""
+    },
+    {
+      "id": 49,
+      "type": "单选题",
+      "stem": "下列情况下，无人机系统驾驶员由行业协会实施管理",
+      "options": [
+        {
+          "label": "A",
+          "content": "在融合空域运行的小型无人机"
+        },
+        {
+          "label": "B",
+          "content": "充气体积在4，600立方米以上的遥控飞艇"
+        },
+        {
+          "label": "C",
+          "content": "在隔离空域内超视距运行的无人机"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "61%",
+      "analysis": "根据《民用无人驾驶航空器系统驾驶员管理暂行规定》第五条：\n下列情况下，无人机系统驾驶员由行业协会实施管理：\n①．在视距内运行的除微型以外的无人机\n②．在隔离空域内超视距运行的无人机；\n③．在融合空域运行的微型无人机；\n④．在融合空域运行的轻型无人机；\n⑤．充气体积在 4，600 立方米以下的遥控飞艇；"
+    },
+    {
+      "id": 50,
+      "type": "单选题",
+      "stem": "民用航空适航管理是对哪几个方面进行管理",
+      "options": [
+        {
+          "label": "A",
+          "content": "发动机、螺旋桨和航空器上的设备"
+        },
+        {
+          "label": "B",
+          "content": "航空器、发动机、螺旋桨"
+        },
+        {
+          "label": "C",
+          "content": "航空器、发动机"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "81%",
+      "analysis": "根据《中国民用航空法》第四章：民用航空器适航管理相关内容，对航空器及其发动机、螺旋桨和民用航空器上设备，进行设计、制造、使用和维修的管理。"
+    },
+    {
+      "id": 51,
+      "type": "单选题",
+      "stem": "飞行申请的内容包括",
+      "options": [
+        {
+          "label": "A",
+          "content": "任务性质、航空器型别、装载情况、飞行范围、起止时间、飞行高度和飞行条件"
+        },
+        {
+          "label": "B",
+          "content": "任务性质、航空器型别、飞行范围、起止时间、飞行高度和飞行条件"
+        },
+        {
+          "label": "C",
+          "content": "任务性质、航空器型别、装载情况、起止时间、飞行高度和飞行条件"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "61%",
+      "analysis": "P142 飞行划申请包括的基本内容：飞行单位、任务、预计开始飞行与结束时间、驾驶员姓名、代号、型别和架数、起飞、降落和备降、飞行气象条件、巡航速度、飞行高度和飞行范围。"
+    },
+    {
+      "id": 52,
+      "type": "单选题",
+      "stem": "我国民航飞行使用的时间为",
+      "options": [
+        {
+          "label": "A",
+          "content": "当地的地方时"
+        },
+        {
+          "label": "B",
+          "content": "北京时"
+        },
+        {
+          "label": "C",
+          "content": "世界协调时"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "82%",
+      "analysis": "协调世界时（英：Coordinated Universal Time ，法：Temps Universel Coordonné），又称世界统一时间，世界标准时间，国际协调时间。简称UTC。"
+    },
+    {
+      "id": 53,
+      "type": "单选题",
+      "stem": "机场的起落航线通常为（ ）航线，起落航线的飞行高度，通常为（ ）",
+      "options": [
+        {
+          "label": "A",
+          "content": "左，300米至600米"
+        },
+        {
+          "label": "B",
+          "content": "右，300米至500米"
+        },
+        {
+          "label": "C",
+          "content": "左，300米至500米"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "75%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第五十一条\n机场的起落航线通常为左航线；若因地形、城市等条件的限制，或者为避免同邻近机场的起落航线交叉，也可以为右航线；起落航线的飞行高度，通常为300米至500米。"
+    },
+    {
+      "id": 54,
+      "type": "单选题",
+      "stem": "空中交通管制单位为飞行中的民用航空器提供的空中交通服务中含有",
+      "options": [
+        {
+          "label": "A",
+          "content": "飞行情报服务"
+        },
+        {
+          "label": "B",
+          "content": "机场保障服务"
+        },
+        {
+          "label": "C",
+          "content": "导航服务"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "88%",
+      "analysis": "空中交通管制单位为民用航空器提供飞行情报服务和告警服务。"
+    },
+    {
+      "id": 55,
+      "type": "单选题",
+      "stem": "关于“飞行管理”不正确的是",
+      "options": [
+        {
+          "label": "A",
+          "content": "在一个划定的管制空域内，可由两个空中交通管制单位负责空中交通管制"
+        },
+        {
+          "label": "B",
+          "content": "通常情况下，民用航空器不得飞入禁区和限制区"
+        },
+        {
+          "label": "C",
+          "content": "民用航空器未经批准不得飞出中华人民共和国领空"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "89%",
+      "analysis": "备选A错在一个划定的管制空域内，只能由一个空中交通管制单位负责空中交通管制"
+    },
+    {
+      "id": 56,
+      "type": "单选题",
+      "stem": "飞行教员应当在接受其飞行或地面教学的每个人的飞行经历记录本上签字，并注明",
+      "options": [
+        {
+          "label": "A",
+          "content": "教学的内容、课时和日期"
+        },
+        {
+          "label": "B",
+          "content": "教学的内容、日期和机型"
+        },
+        {
+          "label": "C",
+          "content": "教学的内容、课时﹑日期和机型"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "59%",
+      "analysis": "根据《民用航空器驾驶员和飞行教员合格审定规则》 第八十条  〔飞行教员记录〕      (一)  飞行教员均应在接受其飞行或地面教学的每个人的飞行经历记录本上签字，并注明给予教学的时间、数量、日期和内容。"
+    },
+    {
+      "id": 57,
+      "type": "单选题",
+      "stem": "最新颁布的中华人民共和国飞行基本规则从（ ）实施",
+      "options": [
+        {
+          "label": "A",
+          "content": "2001年8月1日零时起施行"
+        },
+        {
+          "label": "B",
+          "content": "2001年6月1日零时起施行"
+        },
+        {
+          "label": "C",
+          "content": "2001年10月1日零时起施行"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "77%",
+      "analysis": "最新颁布的中华人民共和国飞行基本规则从2001年8月1日零时起施行"
+    },
+    {
+      "id": 58,
+      "type": "单选题",
+      "stem": "学生驾驶员单飞前必须达到的要求是： \n①通过由授权教员推荐的理论考试；\n②接受并记录了单飞所用航空器的适用动作与程序的飞行训练；\n③经授权教员在该型号或类似航空器上检查，认为该驾驶员熟练掌握了这些动作与程序",
+      "options": [
+        {
+          "label": "A",
+          "content": "②③"
+        },
+        {
+          "label": "B",
+          "content": "①②③"
+        },
+        {
+          "label": "C",
+          "content": "①③"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "93%",
+      "analysis": "根据《民用航空驾驶员和教员合格审定规则》第四章第42条  飞行学员驾驶航空器单飞，必须符合本条要求：\n1、已在用于单飞的该批号和型号航空器上给予了该飞行学员教学训练; \n2、认为该学员已符合本条的飞行训练要求; \n3、该学员在该航空器上单飞能保证飞行安全。"
+    },
+    {
+      "id": 59,
+      "type": "单选题",
+      "stem": "任何单位或者个人设计民用航空器，应当向民航局申请",
+      "options": [
+        {
+          "label": "A",
+          "content": "适航证"
+        },
+        {
+          "label": "B",
+          "content": "生产许可证"
+        },
+        {
+          "label": "C",
+          "content": "型号合格证"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "63%",
+      "analysis": "《中华人民共和国民用航空法》第三十四条：设计民用航空器及其发动机、螺旋桨和民用航空器上设备，应当向国务院民用航空主管部门申请领取型号合格证书。经审查合格的，发给型号合格证书。"
+    },
+    {
+      "id": 60,
+      "type": "单选题",
+      "stem": "Ⅱ级别无人机指",
+      "options": [
+        {
+          "label": "A",
+          "content": "0公斤≤空机质量≤1.5㎏，2公斤≤起飞全重≤7㎏"
+        },
+        {
+          "label": "B",
+          "content": "0.5公斤≤空机质量≤7㎏，1.5公斤≤起飞全重≤7㎏"
+        },
+        {
+          "label": "C",
+          "content": "1.5公斤<空机质量≤4㎏，1.5公斤<起飞全重≤7㎏"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "77%",
+      "analysis": ""
+    },
+    {
+      "id": 61,
+      "type": "单选题",
+      "stem": "谁对民用无人驾驶航空器系统的维护负责",
+      "options": [
+        {
+          "label": "A",
+          "content": "签派"
+        },
+        {
+          "label": "B",
+          "content": "机长"
+        },
+        {
+          "label": "C",
+          "content": "运行人"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "80%",
+      "analysis": "局方把处于适航条件的无人机的维护的主要责任寄予所有者和运营者。"
+    },
+    {
+      "id": 62,
+      "type": "单选题",
+      "stem": "在什么条件下飞行教员方可在学生驾驶员飞行经历记录本上签字，批准其单飞",
+      "options": [
+        {
+          "label": "A",
+          "content": "亲自或委托具备飞行教员资格和权限的飞行教员对该学生驾驶员提供了本规则授予单飞权利所要求的飞行训练，确认该学生驾驶员能够遵守飞行教员出于安全考虑而在飞行经历记录本上作出的任何限制，已经做好准备能够安全实施单飞"
+        },
+        {
+          "label": "B",
+          "content": "亲自对该学生驾驶员提供了本规则授予单飞权利所要求的飞行训练，确认该学生驾驶员能够遵守飞行教员出于安全考虑而在飞行经历记录本上作出的任何限制，已经做好准备能够安全实施单飞"
+        },
+        {
+          "label": "C",
+          "content": "亲自或委托具备飞行教员资格和权限的飞行教员对该学生驾驶员提供了本规则授予单飞权利所要求的飞行训练，确认该学生驾驶员能够遵守飞行教员出于安全考虑而在飞行经历记录本上作出的任何限制，已经做好准备能够安全实施单飞；同时需得到检查教员的认可和批准"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "73%",
+      "analysis": "根据《民用航空器驾驶员和飞行教员合格审定规则》第四章  飞行学员合格证 第42条\n（五）只有符合下列条件，飞行教员方可在飞行学员合格证和飞行经历记录本上签字批准单飞，有效期为90天。      1  已在用于单飞的该批号和型号航空器上给予了该飞行学员教学训练;      2  认为该学员已符合本条的飞行训练要求;      3  认为该学员在该航空器上单飞能保证飞行安全。"
+    },
+    {
+      "id": 63,
+      "type": "单选题",
+      "stem": "执行昼间专业任务的航空器,在山区进行作业飞行时,起飞时间最早不得早于日出前",
+      "options": [
+        {
+          "label": "A",
+          "content": "10分钟"
+        },
+        {
+          "label": "B",
+          "content": "15分钟"
+        },
+        {
+          "label": "C",
+          "content": "20分钟"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "66%",
+      "analysis": "根据《中国民用航空飞行规则》第七章通用航空飞行  \n第122条    在昼间和拂晓进行作业飞行时，应当根据任务性质、作业地区地形确定每天开始和结束飞行的时间。只有在能够清楚地看到地标和能够目视判断作业飞行高度的情况下，方可起飞，但不得早于日出前30分钟（山区日出前20分钟）；着陆时间不得晚于日落时间（山区日落前15分钟）。"
+    },
+    {
+      "id": 64,
+      "type": "单选题",
+      "stem": "下列属于现今多旋翼飞行器典型应用的是",
+      "options": [
+        {
+          "label": "A",
+          "content": "高空长航时侦查"
+        },
+        {
+          "label": "B",
+          "content": "航拍 电影取景"
+        },
+        {
+          "label": "C",
+          "content": "侦打一体化"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "98%",
+      "analysis": ""
+    },
+    {
+      "id": 65,
+      "type": "单选题",
+      "stem": "谁对机组成员遵守飞行基本规则负责",
+      "options": [
+        {
+          "label": "A",
+          "content": "航空单位负责人"
+        },
+        {
+          "label": "B",
+          "content": "机长"
+        },
+        {
+          "label": "C",
+          "content": "民航局及其地区管理局"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "81%",
+      "analysis": "机长对机组成员遵守飞行基本规则负责"
+    },
+    {
+      "id": 66,
+      "type": "单选题",
+      "stem": "《中国民用航空法》的颁布目的\n①为了维护国家的领空主权和民用航空权利\n②保障民用航空活动安全和有秩序地进行\n③保护民用航空活动当事人各方的合法权益\n④促进民用航空事业的发展",
+      "options": [
+        {
+          "label": "A",
+          "content": "③④"
+        },
+        {
+          "label": "B",
+          "content": "①②"
+        },
+        {
+          "label": "C",
+          "content": "①②③④"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "99%",
+      "analysis": "《中国民用航空法》为了维护国家的领空主权和民用航空权利，保障民用航空活动安全和有秩序地进行，保护民用航空活动当事人各方的合法权益，促进民用航空事业的发展而制定的法律。"
+    },
+    {
+      "id": 67,
+      "type": "单选题",
+      "stem": "为保障飞行安全，建议无论是在白天还是夜间,当发动机在运转时就打开：",
+      "options": [
+        {
+          "label": "A",
+          "content": "防撞灯"
+        },
+        {
+          "label": "B",
+          "content": "着陆灯"
+        },
+        {
+          "label": "C",
+          "content": "航行灯"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "82%",
+      "analysis": "红色防撞灯又叫做信标灯，EACON LIGHT或BEACON，分别安装在飞机的上下中部，各一支。用途是防止航空器相撞。此灯根据机型适配的控制器不同，以一定的频率爆破闪烁。此灯在飞机推出及发动机运行时打开！（只要飞机动就必开）"
+    },
+    {
+      "id": 68,
+      "type": "单选题",
+      "stem": "下列情况下，无人机系统驾驶员由局方实施管理",
+      "options": [
+        {
+          "label": "A",
+          "content": "在融合空域运行的Ⅳ级别无人机"
+        },
+        {
+          "label": "B",
+          "content": "在融合空域运行的Ⅻ级别无人机"
+        },
+        {
+          "label": "C",
+          "content": "在隔离空域内超视距运行的无人机"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "61%",
+      "analysis": ""
+    },
+    {
+      "id": 69,
+      "type": "单选题",
+      "stem": "航空器起飞着陆时使用跑道主要取决于",
+      "options": [
+        {
+          "label": "A",
+          "content": "地面风向风速"
+        },
+        {
+          "label": "B",
+          "content": "机型"
+        },
+        {
+          "label": "C",
+          "content": "进场航迹与跑道中心延长线夹角大小"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "73%",
+      "analysis": "相对风向风速直接影响飞机起飞着陆时的升力大小，所以使用跑道取决地面风向风速。"
+    },
+    {
+      "id": 70,
+      "type": "单选题",
+      "stem": "空域管理的具体办法由( )制定",
+      "options": [
+        {
+          "label": "A",
+          "content": "民用航空局"
+        },
+        {
+          "label": "B",
+          "content": "中央军事委员会"
+        },
+        {
+          "label": "C",
+          "content": "国务院和中央军事委员会"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "90%",
+      "analysis": "《中华人民共和国民用航空法》规定：空域管理的具体办法由国务院和中央军事委员会制定"
+    },
+    {
+      "id": 71,
+      "type": "单选题",
+      "stem": "民用无人驾驶航空器系统视距内运行是指航空器处于驾驶员或观测员目视视距内半径（ ）米，相对高度低于（ ）米的区域内",
+      "options": [
+        {
+          "label": "A",
+          "content": "120 500"
+        },
+        {
+          "label": "B",
+          "content": "500 120"
+        },
+        {
+          "label": "C",
+          "content": "100 50"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "81%",
+      "analysis": "轻小型无人机运行(试行)规定定义：视距内运行(VLOS: Visual Line of Sight Operations),无人机驾驶员或无人机观测员与无人机保持直接目视视觉接触的操作方式，航空器处于驾驶员或观测员目视视距内半径 500 米，相对高度低于 120 米的区域内。"
+    },
+    {
+      "id": 72,
+      "type": "单选题",
+      "stem": "关于民用航空器使用禁区的规定是",
+      "options": [
+        {
+          "label": "A",
+          "content": "绝对不得飞入"
+        },
+        {
+          "label": "B",
+          "content": "符合目视气象条件方可飞入"
+        },
+        {
+          "label": "C",
+          "content": "按照国家规定经批准后方可飞入"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "90%",
+      "analysis": "概念：民用航空器使用禁区的规定是按照国家规定经批准后方可飞入。"
+    },
+    {
+      "id": 73,
+      "type": "单选题",
+      "stem": "民用航空器在管制空域内飞行",
+      "options": [
+        {
+          "label": "A",
+          "content": "可以自由飞行"
+        },
+        {
+          "label": "B",
+          "content": "可以按VFR自由飞行"
+        },
+        {
+          "label": "C",
+          "content": "必须取得空中交通管制单位的许可"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "98%",
+      "analysis": "空中交通管制确保飞行器在管制空域中有序安全的飞行，所以民用航空器在管制空域内飞行必须取得空中交通管制单位的许可"
+    },
+    {
+      "id": 74,
+      "type": "单选题",
+      "stem": "在中华人民共和国境内，按照飞行管制责任划分为",
+      "options": [
+        {
+          "label": "A",
+          "content": "飞行管制区、飞行管制分区、机场飞行管制区"
+        },
+        {
+          "label": "B",
+          "content": "飞行管制区、飞行情报区、机场飞行管制区"
+        },
+        {
+          "label": "C",
+          "content": "航路飞行管制区、空域飞行管制区、机场飞行管制区"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "70%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第三十条\n在中华人民共和国境内，按照飞行管制责任划分为：飞行管制区、飞行管制分区、机场飞行管制区。"
+    },
+    {
+      "id": 75,
+      "type": "单选题",
+      "stem": "中华人民共和国境内的飞行管制",
+      "options": [
+        {
+          "label": "A",
+          "content": "由中国人民解放军空军统一组织实施，各有关飞行管制部门按照各自的职责分工提供空中交通管制服务"
+        },
+        {
+          "label": "B",
+          "content": "由国务院﹑中央军委空中交通管制委员会统一组织实施，各有关飞行管制部门按照各自的职责分工提供空中交通管制服务"
+        },
+        {
+          "label": "C",
+          "content": "由中国民用航空总局空中交通管理局统一组织实施，各有关飞行管制部门按照各自的职责分工提供空中交通管制服务"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "66%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第二十八条\n中华人民共和国境内的飞行管制，由中国人民解放军空军统一组织实施，各有关飞行管制部门按照各自的职责分工提供空中交通管制服务。"
+    },
+    {
+      "id": 76,
+      "type": "单选题",
+      "stem": "无识别标志的航空器因特殊情况需要飞行的",
+      "options": [
+        {
+          "label": "A",
+          "content": "必须经相关管制单位批准"
+        },
+        {
+          "label": "B",
+          "content": "必须经中国人民解放军空军批准"
+        },
+        {
+          "label": "C",
+          "content": "必须经中国民用航空总局空中交通管理局批准"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "73%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第四十一条\n在中华人民共和国领空飞行的航空器，必须标明明显的识别标志，禁止无识别标志的航空器飞行。\n无识别标志的航空器因特殊情况需要飞行的，必须经中国人民解放军空军批准。"
+    },
+    {
+      "id": 77,
+      "type": "单选题",
+      "stem": "平流层飞行,按照飞行高度区分为",
+      "options": [
+        {
+          "label": "A",
+          "content": "12000米(不含)以上"
+        },
+        {
+          "label": "B",
+          "content": "9000米(含)以上"
+        },
+        {
+          "label": "C",
+          "content": "12000米(含)以上"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "73%",
+      "analysis": ""
+    },
+    {
+      "id": 78,
+      "type": "单选题",
+      "stem": "在丘陵、山区(高原)进行农业作业飞行的最低天气标准是",
+      "options": [
+        {
+          "label": "A",
+          "content": "云高距作业区的最高点不低于150米,能见度不小于3公里；"
+        },
+        {
+          "label": "B",
+          "content": "云高距作业区的最高点不低于200米,能见度不小于5公里；"
+        },
+        {
+          "label": "C",
+          "content": "云高距作业区的最高点不低于300米,能见度不小于5公里"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "62%",
+      "analysis": "根据《中国民用航空飞行规则》第１２７条    作业飞行的最低天气标准：         （一）平原地区：云高不低于１５０米，能见度不小于５公里，直升机不小于３公里；         （二）丘陵、山区（高原）：云高距作业区的最高点不低于３００米，能见度不小于５公里，无连续性颠簸、下降气流；         （三）作业飞行的风速限制，必须遵守各类作业项目的要求。"
+    },
+    {
+      "id": 79,
+      "type": "单选题",
+      "stem": "学生驾驶员在单飞之前必须在其飞行经历记录本上，有授权教员的签字，证明其在单飞日期之前______天内接受了所飞型号航空器的训练。",
+      "options": [
+        {
+          "label": "A",
+          "content": "90"
+        },
+        {
+          "label": "B",
+          "content": "60"
+        },
+        {
+          "label": "C",
+          "content": "30"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "80%",
+      "analysis": "根据《民用航空驾驶员和教员合格审定规则》第四章第42条\n 飞行教员的签字：只有符合下列条件，飞行教员方可在飞行学员合格证和飞行经历记录本上签字批准单飞，有效期为90天。"
+    },
+    {
+      "id": 80,
+      "type": "单选题",
+      "stem": "执行昼间专业任务的航空器,在平原、丘陵地区进行作业飞行时, 起飞时间最早不得早于日出前",
+      "options": [
+        {
+          "label": "A",
+          "content": "10分钟；"
+        },
+        {
+          "label": "B",
+          "content": "20分钟"
+        },
+        {
+          "label": "C",
+          "content": "30分钟"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "67%",
+      "analysis": "根据《中国民用航空飞行规则》第七章通用航空飞行 第122条    在昼间和拂晓进行作业飞行时，应当根据任务性质、作业地区地形确定每天开始和结束飞行的时间。只有在能够清楚地看到地标和能够目视判断作业飞行高度的情况下，方可起飞，但不得早于日出前30分钟（山区日出前20分钟）；着陆时间不得晚于日落时间（山区日落前15分钟）。"
+    },
+    {
+      "id": 81,
+      "type": "单选题",
+      "stem": "《中国民用航空法》中“飞行人员”是指",
+      "options": [
+        {
+          "label": "A",
+          "content": "在飞行中直接操纵航空器和航空器上航行、通信等设备的人员"
+        },
+        {
+          "label": "B",
+          "content": "机组"
+        },
+        {
+          "label": "C",
+          "content": "机长和副驾驶"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "93%",
+      "analysis": ""
+    },
+    {
+      "id": 82,
+      "type": "单选题",
+      "stem": "农业作业飞行的最低天气标准,平原地区是",
+      "options": [
+        {
+          "label": "A",
+          "content": "云高不低于100米,能见度不小于3公里；"
+        },
+        {
+          "label": "B",
+          "content": "云高不低于150米,能见度不小于5公里；"
+        },
+        {
+          "label": "C",
+          "content": "云高不低于200米,能见度不小于5公里"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "56%",
+      "analysis": ""
+    },
+    {
+      "id": 83,
+      "type": "单选题",
+      "stem": "下面哪个单位领导全国的飞行管制工作",
+      "options": [
+        {
+          "label": "A",
+          "content": "国务院"
+        },
+        {
+          "label": "B",
+          "content": "民航局"
+        },
+        {
+          "label": "C",
+          "content": "国务院﹑中央军委空中交通管制委员会"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "89%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第一章总则第4条：国务院、中央军事委员会空中交通管制委员会领导全国的飞行管制工作。"
+    },
+    {
+      "id": 84,
+      "type": "单选题",
+      "stem": "依法取得中华人民共和国国籍的民用航空器，应当标明规定的国籍标志和:",
+      "options": [
+        {
+          "label": "A",
+          "content": "公司标志"
+        },
+        {
+          "label": "B",
+          "content": "登记标志"
+        },
+        {
+          "label": "C",
+          "content": "机型标志"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "80%",
+      "analysis": "《中华人民共和国民用航空法》第八条：依法取得中华人民共和国国籍的民用航空器，应当标明规定的国籍标志和登记标志。"
+    },
+    {
+      "id": 85,
+      "type": "单选题",
+      "stem": "在广阔水域上空进行各种渔业飞行的最低天气标准",
+      "options": [
+        {
+          "label": "A",
+          "content": "云高不得低于100米,水平能见度不得小于2公里；"
+        },
+        {
+          "label": "B",
+          "content": "云高不得低于150米,水平能见度不得小于3公里；"
+        },
+        {
+          "label": "C",
+          "content": "云高不得低于200米,水平能见度不得小于5公里"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "66%",
+      "analysis": "根据《中国民用航空飞行规则》第１４０条    在广阔水域上空进行各种渔业飞行的最低天气标准：云高不得低于２００米；水平能见度不得小于５公里（直升机不得小于２公里）。"
+    },
+    {
+      "id": 86,
+      "type": "单选题",
+      "stem": "我国管制空域包括A\\B\\C\\D四类空中交通服务空域。每一个空域都是一划定范围的三维空间，其中______空域是中、低空管制空域，为6000m（含）以下至最低高度层以上空间。",
+      "options": [
+        {
+          "label": "A",
+          "content": "A.类"
+        },
+        {
+          "label": "B",
+          "content": "B.类"
+        },
+        {
+          "label": "C",
+          "content": "C.类"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "81%",
+      "analysis": ""
+    },
+    {
+      "id": 87,
+      "type": "单选题",
+      "stem": "微型无人机是指",
+      "options": [
+        {
+          "label": "A",
+          "content": "空机质量小于等于7千克的无人机"
+        },
+        {
+          "label": "B",
+          "content": "质量小于7千克的无人机"
+        },
+        {
+          "label": "C",
+          "content": "质量小于等于7千克的无人机"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "86%",
+      "analysis": "无人机空机质量\n微型 7kg,116kg,116kg,5700kg\n大型无人机 >5700kg"
+    },
+    {
+      "id": 88,
+      "type": "单选题",
+      "stem": "民用航空适航管理是对哪几个环节进行管理",
+      "options": [
+        {
+          "label": "A",
+          "content": "设计、制造"
+        },
+        {
+          "label": "B",
+          "content": "使用和维修"
+        },
+        {
+          "label": "C",
+          "content": "设计、制造、使用和维修"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "93%",
+      "analysis": "根据《中国民用航空法》第四章：民用航空器适航管理相关内容，对航空器及其发动机、螺旋桨和民用航空器上设备，进行设计、制造、使用和维修的管理。"
+    },
+    {
+      "id": 89,
+      "type": "单选题",
+      "stem": "高空飞行,按照飞行高度区分为",
+      "options": [
+        {
+          "label": "A",
+          "content": "4500米(含)至9000米(含)"
+        },
+        {
+          "label": "B",
+          "content": "8000米(含)至12000米(含)"
+        },
+        {
+          "label": "C",
+          "content": "6000米(含)至12000米(含)"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "86%",
+      "analysis": "根据《中国民用航空飞行规则》第19条    飞行分类：\n（六）按照飞行高度划分：\n超低空飞行    距离地面或者水面100米以下；\n低空飞行    距离地面或者水面100米（含）至1000米；\n中空飞行    1000米（含）至6000米；\n高空飞行    6000米（含）至12000类；\n平流层飞行    12000米（不含）以上"
+    },
+    {
+      "id": 90,
+      "type": "单选题",
+      "stem": "航空器与ATC进行第一次无线电联络时,应当首先呼叫：",
+      "options": [
+        {
+          "label": "A",
+          "content": "所需联系的ATC的名称"
+        },
+        {
+          "label": "B",
+          "content": "航空器的注册号"
+        },
+        {
+          "label": "C",
+          "content": "航空器的机型"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "90%",
+      "analysis": "首先呼叫ATC名称，确定将要进入与其相应管制区域，使航空器顺利从一个管制区域交接进入到另外一个管制区域。"
+    },
+    {
+      "id": 91,
+      "type": "单选题",
+      "stem": "超轻型无人机（Ⅲ类）是指空机质量",
+      "options": [
+        {
+          "label": "A",
+          "content": "大于1.5kg 小于等于4kg"
+        },
+        {
+          "label": "B",
+          "content": "大于15kg 小于等于116kg"
+        },
+        {
+          "label": "C",
+          "content": "大于4kg 小于等于15kg"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "62%",
+      "analysis": ""
+    },
+    {
+      "id": 92,
+      "type": "单选题",
+      "stem": "民用无人驾驶航空器系统驾驶员合格证由哪个部门颁发",
+      "options": [
+        {
+          "label": "A",
+          "content": "民航局下属司（局）"
+        },
+        {
+          "label": "B",
+          "content": "中国航空器拥有者及驾驶员协会（中国AOPA）"
+        },
+        {
+          "label": "C",
+          "content": "地区管理局"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "66%",
+      "analysis": "民用无人驾驶航空器系统驾驶员合格证由中国航空器拥有者及驾驶员协会（中国AOPA）颁发"
+    },
+    {
+      "id": 93,
+      "type": "单选题",
+      "stem": "申请飞行计划通常应当于飞行前一日什么时间向空中交通管制部门提出申请,并通知有关单位",
+      "options": [
+        {
+          "label": "A",
+          "content": "15时前"
+        },
+        {
+          "label": "B",
+          "content": "16时前"
+        },
+        {
+          "label": "C",
+          "content": "17时前"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "87%",
+      "analysis": "P142 飞行计划申报应于北京时间前一日15时前向所使用空域的管制单位提交飞行计划申请。"
+    },
+    {
+      "id": 94,
+      "type": "单选题",
+      "stem": "执行紧急救护、抢险救灾或者其它紧急任务，飞行计划申请最迟应在飞行前______提出。",
+      "options": [
+        {
+          "label": "A",
+          "content": "30分钟"
+        },
+        {
+          "label": "B",
+          "content": "一小时"
+        },
+        {
+          "label": "C",
+          "content": "二小时"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "79%",
+      "analysis": "执行紧急救护、抢险救灾或者其他紧急任务时，飞行计划申请最迟应在飞行前一小时提出。"
+    },
+    {
+      "id": 95,
+      "type": "单选题",
+      "stem": "旋翼机飞行时间的含义是指",
+      "options": [
+        {
+          "label": "A",
+          "content": "自旋翼机起飞离地到着陆接地的瞬间"
+        },
+        {
+          "label": "B",
+          "content": "自旋翼机起飞滑跑至着陆滑跑终止的瞬间"
+        },
+        {
+          "label": "C",
+          "content": "自旋翼机旋翼开始转动至旋翼停止转动的瞬间"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "79%",
+      "analysis": "旋翼机飞行时间的含义是指自旋翼机旋翼开始转动至旋翼停止转动的瞬间"
+    },
+    {
+      "id": 96,
+      "type": "单选题",
+      "stem": "在一个划定的管制空域内，由( )负责该空域内的航空器的空中交通管制",
+      "options": [
+        {
+          "label": "A",
+          "content": "军航或民航的一个空中交通管制单位"
+        },
+        {
+          "label": "B",
+          "content": "军航和民航的各一个空中交通管制单位"
+        },
+        {
+          "label": "C",
+          "content": "军航的一个空中交通管制单位"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "84%",
+      "analysis": ""
+    },
+    {
+      "id": 97,
+      "type": "单选题",
+      "stem": "飞行的安全高度是避免航空器与地面障碍物相撞的",
+      "options": [
+        {
+          "label": "A",
+          "content": "航图网格最低飞行高度"
+        },
+        {
+          "label": "B",
+          "content": "最低飞行安全高度"
+        },
+        {
+          "label": "C",
+          "content": "最低飞行高度"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "68%",
+      "analysis": "飞行的安全高度是避免航空器与地面障碍物相撞的最低飞行高度。"
+    },
+    {
+      "id": 98,
+      "type": "单选题",
+      "stem": "在下列哪种情况下民用航空器可以飞越城市上空",
+      "options": [
+        {
+          "label": "A",
+          "content": "指定的航路必需飞越城市上空时"
+        },
+        {
+          "label": "B",
+          "content": "能见地标的目视飞行时"
+        },
+        {
+          "label": "C",
+          "content": "夜间飞行时"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "97%",
+      "analysis": "《中华人民共和国民用航空法》 第七十九条 民用航空器不得飞越城市上空；但是，有下列情形之一的除外：（一）起飞、降落或者指定的航路所必需的；（二）飞行高度足以使该航空器在发生紧急情况时离开城市上空，而不致危及地面上的人员、财产安全的；（三）按照国家规定的程序获得批准的。"
+    },
+    {
+      "id": 99,
+      "type": "单选题",
+      "stem": "在融合空域运行的大型无人机机长，应至少持有",
+      "options": [
+        {
+          "label": "A",
+          "content": "航线 运输驾驶员执照"
+        },
+        {
+          "label": "B",
+          "content": "商照"
+        },
+        {
+          "label": "C",
+          "content": "商照和仪表等级"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "",
+      "analysis": ""
+    },
+    {
+      "id": 100,
+      "type": "单选题",
+      "stem": "在遇到特殊情况，民用航空器的机长，为保证民用航空器及其人员的安全",
+      "options": [
+        {
+          "label": "A",
+          "content": "应当及时向管制单位报告，按照相关规定进行正确处置"
+        },
+        {
+          "label": "B",
+          "content": "应当及时向签派或上级领导报告，按照相关规定进行正确处置"
+        },
+        {
+          "label": "C",
+          "content": "有权对航空器进行处置"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "73%",
+      "analysis": "第四十六条 飞行中，对于任何破坏民用航空器、扰乱民用航空器内秩序、危害民用航空器所载人员或者财产安全以及其他危及飞行安全的行为，在保证安全的前提下，机长有权采取必要的适当措施。飞行中，遇到特殊情况时，为保证民用航空器及其所载人员的安全，机长有权对民用航空器作出处置。"
+    },
+    {
+      "id": 101,
+      "type": "单选题",
+      "stem": "民用无人驾驶航空器系统驾驶员执照由哪个部门颁发",
+      "options": [
+        {
+          "label": "A",
+          "content": "民航局下属司（局）"
+        },
+        {
+          "label": "B",
+          "content": "中国航空器拥有者及驾驶员协会（中国AOPA）"
+        },
+        {
+          "label": "C",
+          "content": "地区管理局"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "59%",
+      "analysis": "民用无人驾驶航空器系统驾驶员执照由民航局下属司（局）颁发"
+    },
+    {
+      "id": 102,
+      "type": "单选题",
+      "stem": "旋翼机可以用（ ）的飞行代替滑行",
+      "options": [
+        {
+          "label": "A",
+          "content": "1米至5米高度"
+        },
+        {
+          "label": "B",
+          "content": "1米至10米高度"
+        },
+        {
+          "label": "C",
+          "content": "1米至15米高度"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "76%",
+      "analysis": "根据《中华人民共和国飞行基本规则》第四十九条\n（六）直升机可以用1米至10米高度的飞行代替滑行。"
+    },
+    {
+      "id": 103,
+      "type": "单选题",
+      "stem": "参加理论考试或实践考试的申请人在参加考试前",
+      "options": [
+        {
+          "label": "A",
+          "content": "应当具有地面教员或飞行教员签注的已完成有关地面理论或飞行训练的证明"
+        },
+        {
+          "label": "B",
+          "content": "应当具有地面教员和飞行教员推荐其参加考试的证明。"
+        },
+        {
+          "label": "C",
+          "content": "以上二者缺一不可"
+        }
+      ],
+      "answer": "C",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "91%",
+      "analysis": "根据《民用航空器驾驶员和飞行教员合格审定规则》\n参加理论考试或实践考试的申请人在参加考试前，应当完成并通过相关理论考试和飞行训练，并由地面教员和飞行教员签注完成培训的证明和推荐证明。"
+    },
+    {
+      "id": 104,
+      "type": "单选题",
+      "stem": "飞行时间的含义是指",
+      "options": [
+        {
+          "label": "A",
+          "content": "从航空器自装载地点开始滑行直到飞行结束到达卸载地点停止运动时为止的时间；"
+        },
+        {
+          "label": "B",
+          "content": "自航空器开始起飞滑跑至着陆滑跑终止的时间；"
+        },
+        {
+          "label": "C",
+          "content": "从航空器起飞进入跑道至着陆脱离跑道的时间"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "77%",
+      "analysis": "根据《中国民用航空飞行规则》第四章 飞行组织与实施 第80条    \n飞行时间，是指从航空器为准备起飞而借本身的动力自装载地点开始移动时起，直到飞行结束到达卸载地点停止运动时为止的时间。"
+    },
+    {
+      "id": 105,
+      "type": "单选题",
+      "stem": "民用无人驾驶航空器系统驾驶员合格证申请人必须在民用无人驾驶航空器系统上训练不少于多少小时的飞行训练时间",
+      "options": [
+        {
+          "label": "A",
+          "content": "56"
+        },
+        {
+          "label": "B",
+          "content": "44"
+        },
+        {
+          "label": "C",
+          "content": "100"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "68%",
+      "analysis": "民用无人驾驶航空器系统驾驶员合格证申请人必须在民用无人驾驶航空器系统上训练时间：1）飞行前检查，不少于 4 小时;2）正常飞行程序操作，不少于 20 小时;3）应急飞行程序操作，包括发动机故障、链路丢失、应急回收、迫降等，不少于 20 小时。"
+    },
+    {
+      "id": 106,
+      "type": "单选题",
+      "stem": "起落航线飞行开始一转弯和结束四转弯的高度一般不得低于",
+      "options": [
+        {
+          "label": "A",
+          "content": "50米"
+        },
+        {
+          "label": "B",
+          "content": "100米"
+        },
+        {
+          "label": "C",
+          "content": "150米"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "77%",
+      "analysis": "根据《中国民用航空飞行规则》第五章    机场区域内飞行    第98条    起落航线飞行的规定：（一）起落航线飞行的高度通常为300米至500米，直升机通常为200米。低空小航线不得低于120米。起飞后，开始第一转弯和结束四转弯的高度不得低于100米，低空小航线不得低于50米，在复杂气象条件下或者夜间不得低于150米。"
+    },
+    {
+      "id": 107,
+      "type": "单选题",
+      "stem": "颁发国内三个层次航空法规的部门分别是①全国人大或全国人大常委会 ②国务院、中央军委 ③民航局 ④民航地区管理局",
+      "options": [
+        {
+          "label": "A",
+          "content": "①②③"
+        },
+        {
+          "label": "B",
+          "content": "①②④"
+        },
+        {
+          "label": "C",
+          "content": "③④"
+        }
+      ],
+      "answer": "A",
+      "yourAnswer": "A",
+      "personalAccuracy": "50%",
+      "siteAccuracy": "86%",
+      "analysis": "全国人民代表大会制定《中华人民共和国民用航空法》\n国务院、中央军委制定《中华人民共和国飞行基本规则》\n民航局制定《一般运行和飞行规则》(CCAR-91)、《小型航空器商业运输运营人运行合格审定规则》(CCAR-135)"
+    },
+    {
+      "id": 108,
+      "type": "单选题",
+      "stem": "任何单位或者个人未取得( )，均不得生产民用航空器",
+      "options": [
+        {
+          "label": "A",
+          "content": "适航证"
+        },
+        {
+          "label": "B",
+          "content": "生产许可证"
+        },
+        {
+          "label": "C",
+          "content": "型号合格证"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "A",
+      "personalAccuracy": "0%",
+      "siteAccuracy": "83%",
+      "analysis": "《中华人民共和国民用航空法》第三十五条：生产、维修民用航空器及其发动机、螺旋桨和民用航空器上设备，应当向国务院民用航空主管部门申请领取生产许可证书、维修许可证书。经审查合格的，发给相应的证书。"
+    },
+    {
+      "id": 109,
+      "type": "单选题",
+      "stem": "关于通用航空的说法正确的是：\n①通用航空企业从事经营性通用航空活动，应当与用户订立书面合同，但是紧急情况下的救灾飞行除外。\n②组织实施作业飞行时，应当采取有效措施，保证飞行安全。\n③组织实施作业飞行时，保护环境和生态平衡，防止对环境.居民.作物或者牲畜等造成损害。\n④从事通用航空活动的，应当投保地面第三人责任险。",
+      "options": [
+        {
+          "label": "A",
+          "content": "①②③"
+        },
+        {
+          "label": "B",
+          "content": "①②③④"
+        },
+        {
+          "label": "C",
+          "content": "①②④"
+        }
+      ],
+      "answer": "B",
+      "yourAnswer": "B",
+      "personalAccuracy": "100%",
+      "siteAccuracy": "97%",
+      "analysis": "根据《中华人民共和国民用航空法》和《中华人民共和国飞行基本规则》制定了通用航空规则，包括了一下几点：\n①通用航空企业从事经营性通用航空活动，应当与用户订立书面合同，但是紧急情况下的救灾飞行除外。\n②组织实施作业飞行时，应当采取有效措施，保证飞行安全。\n③组织实施作业飞行时，保护环境和生态平衡，防止对环境.居民.作物或者牲畜等造成损害。\n④从事通用航空活动的，应当投保地面第三人责任险。"
+    }
+  ]
+}
+</script>
+
+<script>
+(function(){
+  var RAW_DATA = JSON.parse(document.getElementById('questionData').textContent.trim());
+  var state = {
+    theme: 'light',
+    order: [],
+    records: {},
+    elapsedSec: 0,
+    lastSaved: Date.now(),
+    submitted: false,
+    mode: 'normal' // 'normal' | 'redo_wrong'
+  };
+  var questions = [];
+  var current = 0;
+  var timerInterval;
+
+  function init(){
+    loadState();
+    applyTheme();
+
+    if (!state.order || state.order.length === 0) {
+      initSession('normal');
+    } else {
+      questions = state.order.map(function(idx){ return RAW_DATA.questions[idx]; });
+      if (questions.length === 0) initSession('normal'); // fallback
+    }
+
+    startTimer();
+    render();
+  }
+
+  function loadState() {
+    try {
+      var d = localStorage.getItem('uav_quiz_state');
+      if (d) {
+        var parsed = JSON.parse(d);
+        if (parsed) {
+          state = Object.assign(state, parsed);
+          // Resume timer if not submitted
+          if (!state.submitted) state.lastSaved = Date.now();
+        }
+      }
+    } catch(e) {}
+  }
+
+  function saveState() {
+    try { localStorage.setItem('uav_quiz_state', JSON.stringify(state)); } catch(e){}
+  }
+
+  function initSession(mode, specificIndices) {
+    if (mode === 'normal') {
+      var indices = [];
+      for (var i = 0; i < RAW_DATA.questions.length; i++) indices.push(i);
+      state.order = shuffle(indices);
+    } else {
+      state.order = specificIndices;
+    }
+    state.records = {};
+    state.elapsedSec = 0;
+    state.lastSaved = Date.now();
+    state.submitted = false;
+    state.mode = mode;
+    questions = state.order.map(function(idx){ return RAW_DATA.questions[idx]; });
+    current = 0;
+    saveState();
+  }
+
+  function shuffle(arr){
+    for(var i=arr.length-1;i>0;i--){
+      var j=Math.floor(Math.random()*(i+1));
+      var t=arr[i];arr[i]=arr[j];arr[j]=t;
+    }
+    return arr;
+  }
+
+  // ── Timer ──
+  function startTimer(){
+    clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimer, 1000);
+    renderTimer();
+  }
+  function updateTimer(){
+    if (state.submitted) return;
+    var now = Date.now();
+    var diff = Math.floor((now - state.lastSaved) / 1000);
+    if (diff > 0) {
+      state.elapsedSec += diff;
+      state.lastSaved = now;
+      saveState();
+      renderTimer();
+    }
+  }
+  function renderTimer() {
+    document.getElementById('timer').textContent = formatTime(state.elapsedSec);
+  }
+  function formatTime(s) {
+    var m = Math.floor(s / 60);
+    var sec = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  // ── Theme ──
+  function applyTheme() { document.documentElement.setAttribute('data-theme', state.theme); }
+  document.getElementById('themeBtn').addEventListener('click', function(){
+    state.theme = state.theme === 'light' ? 'dark' : 'light';
+    applyTheme();
+    saveState();
+  });
+
+  // ── Render ──
+  function render(){
+    renderSlide();
+    updateNav();
+    updateProgress();
+  }
+
+  function escapeHtml(str){
+    var div=document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  function renderSlide(){
+    var wrapper=document.getElementById('slideWrapper');
+    wrapper.innerHTML='';
+    var q=questions[current];
+    var rec=state.records[q.id];
+    var slide=document.createElement('div');
+    slide.className='slide center';
+    slide.innerHTML=buildQuestion(q,rec);
+    wrapper.appendChild(slide);
+    bindOpts(slide,q);
+  }
+
+  function buildQuestion(q, rec){
+    var answered = rec !== undefined;
+    var showAnswers = state.submitted || answered;
+    
+    var h='<div class="q-num">'+(current+1)+' / '+questions.length+'\u3000'+escapeHtml(q.type)+'</div>';
+    h+='<div class="q-stem">'+escapeHtml(q.stem)+'</div>';
+    h+='<div class="options">';
+    for(var i=0;i<q.options.length;i++){
+      var opt=q.options[i];
+      var cls='opt';
+      if(showAnswers){
+        cls+=' disabled';
+        if(opt.label===q.answer) cls+=' correct';
+        else if(rec && opt.label===rec.selected && rec.selected!==q.answer) cls+=' wrong';
+        else if(!rec || (opt.label!==q.answer && opt.label!==rec.selected)) cls+=' dimmed';
+      }
+      h+='<div class="'+cls+'" data-label="'+opt.label+'">';
+      h+='<span class="label">'+opt.label+'</span>';
+      h+='<span class="content">'+escapeHtml(opt.content)+'</span>';
+      h+='</div>';
+    }
+    h+='</div>';
+    if(showAnswers && q.analysis){
+      h+='<div class="analysis show"><strong>\u89E3\u6790</strong>\u3000'+escapeHtml(q.analysis).replace(/\n/g,'<br>')+'</div>';
+    }
+    return h;
+  }
+
+  function bindOpts(slide,q){
+    var opts=slide.querySelectorAll('.opt');
+    for(var i=0;i<opts.length;i++){
+      (function(el){
+        el.addEventListener('click',function(){handleAnswer(el,q);});
+      })(opts[i]);
+    }
+  }
+
+  function handleAnswer(el,q){
+    if(state.records[q.id] !== undefined || state.submitted) return;
+    
+    var selected = el.getAttribute('data-label');
+    var isCorrect = selected === q.answer;
+    state.records[q.id] = { selected: selected, correct: isCorrect };
+    saveState();
+
+    var slide = el.closest('.slide');
+    var opts = slide.querySelectorAll('.opt');
+    for(var i=0; i<opts.length; i++){
+      var o = opts[i];
+      o.classList.add('disabled');
+      var lb = o.getAttribute('data-label');
+      if(lb === q.answer){
+        o.classList.add('correct');
+        if(isCorrect) o.classList.add('sparkle');
+      }
+      if(lb === selected && !isCorrect) {
+        o.classList.add('wrong');
+        o.classList.add('shake');
+      }
+      if(lb !== q.answer && lb !== selected) o.classList.add('dimmed');
+    }
+
+    if(q.analysis){
+      var a = document.createElement('div');
+      a.className = 'analysis show';
+      a.innerHTML = '<strong>\u89E3\u6790</strong>\u3000' + escapeHtml(q.analysis).replace(/\n/g, '<br>');
+      slide.querySelector('.options').insertAdjacentElement('afterend', a);
+    }
+
+    if(isCorrect){
+      setTimeout(function(){ goNext(); }, 400);
+    }
+  }
+
+  // ── Nav ──
+  function goTo(idx,dir){
+    if(idx<0||idx>=questions.length) return;
+    var wrapper=document.getElementById('slideWrapper');
+    var oldSlide=wrapper.querySelector('.slide.center');
+    current=idx;
+    updateNav();
+    updateProgress();
+
+    var q=questions[current];
+    var rec=state.records[q.id];
+    var newSlide=document.createElement('div');
+    newSlide.className='slide '+(dir==='next'?'right':'left');
+    newSlide.innerHTML=buildQuestion(q,rec);
+    wrapper.appendChild(newSlide);
+    bindOpts(newSlide,q);
+
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        if(oldSlide) oldSlide.className='slide '+(dir==='next'?'left':'right');
+        newSlide.className='slide center';
+      });
+    });
+    setTimeout(function(){if(oldSlide&&oldSlide.parentNode)oldSlide.remove();},350);
+  }
+
+  function goPrev(){goTo(current-1,'prev');}
+  function goNext(){goTo(current+1,'next');}
+
+  function updateNav(){
+    var pb=document.getElementById('prevBtn');
+    var nb=document.getElementById('nextBtn');
+    if(current===0) pb.classList.add('disabled'); else pb.classList.remove('disabled');
+    if(current===questions.length-1) nb.classList.add('disabled'); else nb.classList.remove('disabled');
+    document.getElementById('counter').textContent=(current+1)+' / '+questions.length;
+    
+    var subBtn = document.getElementById('submitBtn');
+    if (state.submitted) {
+      subBtn.textContent = '得分';
+      subBtn.classList.add('submitted');
+    } else {
+      subBtn.textContent = '交卷';
+      subBtn.classList.remove('submitted');
+    }
+  }
+  function updateProgress(){
+    var pct=((current+1)/questions.length)*100;
+    document.getElementById('progressBar').style.width=pct+'%';
+  }
+
+  // ── Swipe & Gestures ──
+  var touchStartX=0,touchStartY=0,swiping=false;
+  var wrapperEl=document.getElementById('slideWrapper');
+  wrapperEl.addEventListener('touchstart',function(e){
+    touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; swiping=true;
+  },{passive:true});
+  wrapperEl.addEventListener('touchend',function(e){
+    if(!swiping)return; swiping=false;
+    var dx=e.changedTouches[0].clientX-touchStartX;
+    var dy=e.changedTouches[0].clientY-touchStartY;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.2){ if(dx<0) goNext(); else goPrev(); }
+  },{passive:true});
+
+  var mouseDown=false,mouseStartX=0;
+  wrapperEl.addEventListener('mousedown',function(e){mouseDown=true;mouseStartX=e.clientX;});
+  wrapperEl.addEventListener('mouseup',function(e){
+    if(!mouseDown)return; mouseDown=false;
+    var dx=e.clientX-mouseStartX;
+    if(Math.abs(dx)>60){ if(dx<0) goNext(); else goPrev(); }
+  });
+  wrapperEl.addEventListener('mouseleave',function(){mouseDown=false;});
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowLeft') goPrev();
+    if(e.key==='ArrowRight') goNext();
+  });
+
+  document.getElementById('prevBtn').addEventListener('click',goPrev);
+  document.getElementById('nextBtn').addEventListener('click',goNext);
+
+  // ── Answer Card ──
+  var cardOverlay=document.getElementById('cardOverlay');
+  document.getElementById('cardBtn').addEventListener('click',openCard);
+  document.getElementById('acClose').addEventListener('click',closeCard);
+  cardOverlay.addEventListener('click',function(e){if(e.target===cardOverlay)closeCard();});
+
+  function openCard(){
+    var grid=document.getElementById('acGrid');
+    grid.innerHTML='';
+    var doneCount=0,correctCount=0,wrongCount=0;
+    for(var i=0;i<questions.length;i++){
+      var q=questions[i];
+      var cell=document.createElement('div');
+      cell.className='ac-cell';
+      cell.textContent=i+1;
+      if(i===current) cell.classList.add('current');
+      
+      var rec=state.records[q.id];
+      if(rec){
+        doneCount++;
+        if(rec.correct){correctCount++;cell.classList.add('done-correct');}
+        else{wrongCount++;cell.classList.add('done-wrong');}
+      } else if (state.submitted) {
+        cell.classList.add('done-wrong');
+      }
+      
+      (function(idx){
+        cell.addEventListener('click',function(){
+          closeCard();
+          goTo(idx,idx>current?'next':'prev');
+        });
+      })(i);
+      grid.appendChild(cell);
+    }
+    
+    var totalWrong = state.submitted ? (questions.length - correctCount) : wrongCount;
+    document.getElementById('acStats').textContent=
+      '\u5DF2\u7B54 '+doneCount+'\u3000\u6B63\u786E '+correctCount+'\u3000\u9519\u8BEF '+totalWrong;
+    cardOverlay.classList.add('show');
+    requestAnimationFrame(function(){cardOverlay.classList.add('visible');});
+  }
+  function closeCard(){
+    cardOverlay.classList.remove('visible');
+    setTimeout(function(){cardOverlay.classList.remove('show');},300);
+  }
+
+  // ── Custom Dialog ──
+  var dialogOverlay = document.getElementById('dialogOverlay');
+  var dialogCancel = document.getElementById('dialogCancel');
+  var dialogConfirm = document.getElementById('dialogConfirm');
+  var onDialogCancel = null, onDialogConfirm = null;
+
+  function showDialog(title, msg, cancelText, confirmText, cancelCb, confirmCb) {
+    document.getElementById('dialogTitle').textContent = title;
+    document.getElementById('dialogMsg').textContent = msg;
+    dialogCancel.textContent = cancelText;
+    dialogConfirm.textContent = confirmText;
+    onDialogCancel = cancelCb;
+    onDialogConfirm = confirmCb;
+    dialogOverlay.classList.add('show');
+    requestAnimationFrame(function(){ dialogOverlay.classList.add('visible'); });
+  }
+  function closeDialog() {
+    dialogOverlay.classList.remove('visible');
+    setTimeout(function(){ dialogOverlay.classList.remove('show'); }, 300);
+  }
+  dialogCancel.addEventListener('click', function(){ closeDialog(); if(onDialogCancel) onDialogCancel(); });
+  dialogConfirm.addEventListener('click', function(){ closeDialog(); if(onDialogConfirm) onDialogConfirm(); });
+
+  // ── Submit & Result ──
+  document.getElementById('submitBtn').addEventListener('click', function(){
+    if (state.submitted) { showResult(); return; }
+    var answeredCount = Object.keys(state.records).length;
+    var total = questions.length;
+    if (answeredCount < total) {
+      showDialog(
+        '确认交卷',
+        '您完成了 ' + answeredCount + ' / ' + total + ' 道题。还有未做的题目，是否要前往补做？',
+        '去补做',
+        '强行交卷',
+        function() {
+          var firstUnanswered = -1;
+          for (var i = 0; i < questions.length; i++) {
+            if (!state.records[questions[i].id]) { firstUnanswered = i; break; }
+          }
+          if (firstUnanswered !== -1) goTo(firstUnanswered, firstUnanswered > current ? 'next' : 'prev');
+        },
+        function() { submitQuiz(); }
+      );
+    } else {
+      showDialog('确认交卷', '您已完成所有题目，确定要交卷吗？', '取消', '确定', null, function(){ submitQuiz(); });
+    }
+  });
+
+  function submitQuiz() {
+    state.submitted = true;
+    saveState();
+    showResult();
+  }
+
+  var resOverlay = document.getElementById('resultOverlay');
+  function showResult() {
+    var correctCount = 0;
+    var answeredCount = 0;
+    questions.forEach(function(q) {
+      var rec = state.records[q.id];
+      if (rec) {
+        answeredCount++;
+        if (rec.correct) correctCount++;
+      }
+    });
+    var score = Math.round((correctCount / questions.length) * 100);
+    document.getElementById('scoreVal').textContent = score;
+    var wrong = correctCount >= answeredCount ? (questions.length - correctCount) : (answeredCount - correctCount + questions.length - answeredCount);
+    // actually, wrong is total - correct
+    var unans = questions.length - answeredCount;
+    var totalWrong = questions.length - correctCount;
+    
+    document.getElementById('scoreStats').textContent = '用时: ' + formatTime(state.elapsedSec) + ' | 错题: ' + (totalWrong - unans) + ' | 未做: ' + unans;
+    document.getElementById('redoWrongBtn').style.display = totalWrong > 0 ? 'block' : 'none';
+    
+    resOverlay.classList.add('show');
+    requestAnimationFrame(function(){ resOverlay.classList.add('visible'); });
+    
+    renderSlide();
+    updateNav();
+  }
+  function closeResult() {
+    resOverlay.classList.remove('visible');
+    setTimeout(function(){ resOverlay.classList.remove('show'); }, 300);
+  }
+
+  document.getElementById('reviewBtn').addEventListener('click', closeResult);
+  document.getElementById('restartBtn').addEventListener('click', function() {
+    closeResult();
+    initSession('normal');
+    render();
+  });
+  document.getElementById('redoWrongBtn').addEventListener('click', function() {
+    closeResult();
+    var wrongIndices = [];
+    state.order.forEach(function(idx) {
+      var q = RAW_DATA.questions[idx];
+      var rec = state.records[q.id];
+      if (!rec || !rec.correct) wrongIndices.push(idx); // unanswered or wrong
+    });
+    initSession('redo_wrong', wrongIndices);
+    render();
+  });
+
+  init();
+})();
+</script>
+
+</body>
+</html>
