@@ -17,6 +17,7 @@
   --water: #e8f4fd;
   --text: #2c3e50;
   --sub: #8a9bb5;
+  --correct: #4caf93;
   --border: #e4ecf5;
   --header-bg: rgba(255,255,255,.88);
 }
@@ -28,6 +29,7 @@
   --water: #1a2635;
   --text: #e0e0e0;
   --sub: #8899a6;
+  --correct: #3a9679;
   --border: #2c2c2c;
   --header-bg: rgba(30,30,30,.88);
 }
@@ -73,19 +75,91 @@ html,body{
   max-width: 600px;
   margin: 0 auto;
 }
-.header-hero {
+.hero-stats {
+  display: flex;
+  gap: 16px;
   margin-bottom: 24px;
 }
-.header-hero h1 {
-  font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 8px;
+.hero-stat {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
-.header-hero p {
-  font-size: 14px; color: var(--sub); line-height: 1.5;
+.hero-val {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.hero-lbl {
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.bank-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.bank-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--water);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bank-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 3px;
+  width: 0%;
+}
+.bank-progress-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  width: 32px;
+  text-align: right;
+}
+.bank-status-text {
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 6px;
+}
+.bank-icon {
+  margin-right: 6px;
+}
+.onboarding-banner {
+  background: var(--water);
+  color: var(--primary);
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  margin-bottom: 24px;
+  text-align: center;
+  border: 1px solid var(--border);
+  display: none; /* hidden by default */
+}
+.group-title {
+  grid-column: 1 / -1;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sub);
+  margin-top: 8px;
+  margin-bottom: -4px;
 }
 
 .bank-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
 }
 
@@ -171,9 +245,13 @@ html,body{
 </header>
 
 <main class="main-content">
-  <div class="header-hero">
-    <h1>无人机法规题库</h1>
-    <p>选择你要练习的题库，系统会自动保存你的练习进度。</p>
+  <div class="onboarding-banner" id="onboardingBanner">
+    🎯 欢迎开始练习！选择一个题库，开始你的无人机法规备考之旅。
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="hero-val" id="totalCompleted">0</span><span class="hero-lbl">已完成题库</span></div>
+    <div class="hero-stat"><span class="hero-val" id="totalQuestions">0</span><span class="hero-lbl">累计练习题</span></div>
+    <div class="hero-stat"><span class="hero-val" id="avgScore">--</span><span class="hero-lbl">平均得分</span></div>
   </div>
   
   <div class="bank-grid" id="bankGrid">
@@ -244,55 +322,121 @@ html,body{
 
   var grid = document.getElementById('bankGrid');
   
-  banks.forEach(function(bank) {
-    var a = document.createElement('a');
-    a.className = 'bank-card';
-    a.href = 'quiz.html?bank=' + encodeURIComponent(bank.file);
-    a.addEventListener('click', function(e) {
-      e.preventDefault();
-      var href = this.getAttribute('href');
-      var overlay = document.getElementById('pageTransition');
-      overlay.classList.add('active');
-      setTimeout(function() {
-        window.location.href = href;
-      }, 250);
-    });
-    
-    // Check progress
-    var storageKey = 'uav_quiz_state_' + bank.file;
-    var statKey = 'uav_quiz_stat_' + bank.file;
-    var progressHtml = '<span>' + bank.desc + '</span>';
-
-    try {
-      var stat = localStorage.getItem(statKey);
-      if (stat) {
-        var s = JSON.parse(stat);
-        progressHtml += '<span class="bank-status bank-score">' + s.score + '分 · 错' + s.wrong + '</span>';
-      } else {
-        var d = localStorage.getItem(storageKey);
-        if (d) {
-          var state = JSON.parse(d);
-          if (state.submitted) {
-            progressHtml += '<span class="bank-status">已完成交卷</span>';
-          } else if (state.records && Object.keys(state.records).length > 0) {
-            progressHtml += '<span class="bank-status">进行中 (第' + ((state.current || 0) + 1) + '题)</span>';
-          }
-        }
-      }
-    } catch(e) {}
-
-    a.innerHTML = `
-      <div class="bank-info">
-        <div class="bank-title">${bank.name}</div>
-        <div class="bank-meta">${progressHtml}</div>
-      </div>
-      <div class="bank-action">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    `;
-    
-    grid.appendChild(a);
+  var totalCompleted = 0;
+  var totalQuestions = 0;
+  var totalScoreSum = 0;
+  var startedAny = false;
+  
+  var coreBanks = [];
+  var advancedBanks = [];
+  
+  banks.forEach(function(bank, idx) {
+    if (idx < 7) coreBanks.push(bank);
+    else advancedBanks.push(bank);
   });
+
+  function renderGroup(title, groupBanks) {
+    if (groupBanks.length === 0) return;
+    
+    var titleEl = document.createElement('div');
+    titleEl.className = 'group-title';
+    titleEl.textContent = title;
+    grid.appendChild(titleEl);
+
+    groupBanks.forEach(function(bank) {
+      var a = document.createElement('a');
+      a.className = 'bank-card';
+      a.href = 'quiz.html?bank=' + encodeURIComponent(bank.file);
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        var href = this.getAttribute('href');
+        var overlay = document.getElementById('pageTransition');
+        overlay.classList.add('active');
+        setTimeout(function() {
+          window.location.href = href;
+        }, 250);
+      });
+      
+      var storageKey = 'uav_quiz_state_' + bank.file;
+      var statKey = 'uav_quiz_stat_' + bank.file;
+      
+      var pct = 0;
+      var statusHtml = '';
+      var icon = '📚';
+      if (title.includes('必背')) icon = '📌';
+      
+      var qTotalMatch = bank.desc.match(/(\d+)题/);
+      var qTotal = qTotalMatch ? parseInt(qTotalMatch[1]) : 0;
+      
+      var state = null;
+      var stat = null;
+      
+      try {
+        var sData = localStorage.getItem(statKey);
+        if (sData) {
+          stat = JSON.parse(sData);
+        }
+        var dData = localStorage.getItem(storageKey);
+        if (dData) {
+          state = JSON.parse(dData);
+        }
+      } catch(e) {}
+      
+      if (stat) {
+        startedAny = true;
+        totalCompleted++;
+        totalQuestions += (stat.total || qTotal);
+        totalScoreSum += (stat.score || 0);
+        pct = 100;
+        var totWrong = (stat.wrong || 0) + (stat.unanswered || 0);
+        statusHtml = '✓ ' + (stat.correct || 0) + '题 · 错' + totWrong + '题 · 上次' + stat.score + '分';
+        
+        // if user restarted but has stat
+        if (state && !state.submitted && state.records && Object.keys(state.records).length > 0) {
+            pct = Math.round((Object.keys(state.records).length / qTotal) * 100) || 0;
+            statusHtml = '进行中：第' + ((state.current || 0) + 1) + '题 / 总' + qTotal + '题 (上次' + stat.score + '分)';
+        }
+      } else if (state && state.records && Object.keys(state.records).length > 0) {
+        startedAny = true;
+        totalQuestions += Object.keys(state.records).length;
+        pct = Math.round((Object.keys(state.records).length / qTotal) * 100) || 0;
+        if (state.submitted) pct = 100;
+        statusHtml = state.submitted ? '已完成' : '进行中：第' + ((state.current || 0) + 1) + '题 / 总' + qTotal + '题';
+      } else {
+        statusHtml = '未开始';
+      }
+      
+      a.innerHTML = `
+        <div class="bank-info">
+          <div class="bank-title"><span class="bank-icon">${icon}</span>${bank.name}</div>
+          <div class="bank-meta">${bank.desc}</div>
+          <div class="bank-progress-container">
+            <div class="bank-progress-bar"><div class="bank-progress-fill" style="width: ${pct}%; background: ${pct === 100 ? 'var(--correct)' : ''}"></div></div>
+            <div class="bank-progress-text" style="color: ${pct === 100 ? 'var(--correct)' : ''}">${pct}%</div>
+          </div>
+          <div class="bank-status-text">${statusHtml}</div>
+        </div>
+        <div class="bank-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      `;
+      
+      grid.appendChild(a);
+    });
+  }
+
+  renderGroup('📌 核心必背', coreBanks);
+  renderGroup('📚 进阶练习', advancedBanks);
+
+  document.getElementById('totalCompleted').textContent = totalCompleted;
+  document.getElementById('totalQuestions').textContent = totalQuestions;
+  if (totalCompleted > 0) {
+    document.getElementById('avgScore').textContent = Math.round(totalScoreSum / totalCompleted);
+  }
+  if (!startedAny) {
+    document.getElementById('onboardingBanner').style.display = 'block';
+  }
+
 
 })();
 </script>

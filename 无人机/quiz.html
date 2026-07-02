@@ -607,208 +607,123 @@
       color: #fff;
     }
 
-    /* Result Card */
-    .modal-overlay.result-wrapper {
-      align-items: center;
-      justify-content: center;
-    }
-
-    .result-close {
-      position: absolute;
-      top: 12px; right: 12px;
-      width: 32px; height: 32px;
-      display: flex; align-items: center; justify-content: center;
-      border: none; background: var(--bg);
-      border-radius: 50%; cursor: pointer;
-      z-index: 2;
-      transition: background 0.2s, transform 0.15s;
-    }
-    .result-close:active { transform: scale(0.92); background: var(--border); }
-    .result-close svg { width: 16px; height: 16px; color: var(--sub); }
-
-    .result-card { position: relative; }
-
-    .result-card {
-      width: 90%;
-      max-width: 340px;
-      background: var(--card);
-      border-radius: 24px;
-      padding: 32px 24px;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-      transform: scale(0.9);
-      transition: transform 0.3s cubic-bezier(.175, .885, .32, 1.275);
-      max-height: 90vh;
+    
+    /* Result Fullscreen */
+    .result-fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, var(--water), var(--bg));
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       overflow-y: auto;
     }
-
-    .modal-overlay.visible .result-card {
-      transform: scale(1);
+    .result-fullscreen.show {
+      transform: translateY(0);
     }
-
-    .score-title {
-      font-size: 16px;
-      color: var(--sub);
-      font-weight: 500;
+    .result-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
     }
-
-    .score-val {
-      font-size: 80px;
-      font-weight: 700;
-      color: var(--primary);
-      margin: 8px 0;
-      line-height: 1;
-      font-family: system-ui, -apple-system, sans-serif;
-      letter-spacing: -2px;
-    }
-
-    .score-stats {
-      font-size: 14px;
-      color: var(--sub);
-      margin-bottom: 24px;
-      background: var(--bg);
-      padding: 10px;
-      border-radius: 12px;
-    }
-
-    .res-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
+    .result-back-btn {
+      background: none;
       border: none;
+      color: var(--sub);
       font-size: 15px;
       font-weight: 500;
       cursor: pointer;
-      margin-bottom: 12px;
-      transition: 0.2s;
     }
-
-    .res-btn:active {
-      transform: scale(0.97);
-    }
-
-    .res-btn.primary {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .res-btn.outline {
-      background: transparent;
-      border: 1.5px solid var(--primary);
-      color: var(--primary);
-    }
-
-    .res-btn.secondary {
-      background: var(--water);
+    .result-title {
+      flex: 1;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
       color: var(--text);
-      margin-bottom: 0;
+      margin-right: 48px; /* balance the back btn */
     }
-
-    .res-btn.screenshot {
-      background: #2c3e50;
-      color: #fff;
-    }
-
-    /* Pause Overlay */
-    .pause-overlay {
-      position: fixed;
-      top: 54px;
-      bottom: 56px;
-      left: 0;
-      right: 0;
-      background: transparent;
-      z-index: 150;
+    .result-score-section {
       display: flex;
       flex-direction: column;
       align-items: center;
+      margin-top: 40px;
+      margin-bottom: 30px;
+    }
+    .score-circle {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
       justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
-    }
-
-    [data-theme="dark"] .pause-overlay {
-      background: transparent;
-    }
-
-    .pause-overlay.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .pause-icon {
-      width: 48px;
-      height: 48px;
-      color: var(--primary);
+      border: 8px solid var(--primary);
       margin-bottom: 16px;
     }
-
-    .pause-text {
-      font-size: 18px;
-      font-weight: 500;
-      color: var(--text);
-      margin-bottom: 24px;
+    [data-theme="dark"] .score-circle { background: var(--card); }
+    .score-number {
+      font-size: 56px;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: system-ui, -apple-system, sans-serif;
     }
-
-    .resume-btn {
-      background: var(--primary);
-      color: #fff;
+    .score-unit { font-size: 18px; color: var(--sub); margin-left: 2px; margin-top: 24px;}
+    .score-sub { font-size: 14px; color: var(--sub); }
+    .result-stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 40px;
+      padding: 0 20px;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .stat-val { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .stat-label { font-size: 13px; color: var(--sub); }
+    .result-main-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 0 32px;
+      margin-bottom: 30px;
+    }
+    .result-action-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
       border: none;
-      padding: 12px 32px;
-      border-radius: 20px;
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(58, 123, 213, 0.3);
       transition: transform 0.2s;
     }
-
-    .resume-btn:active {
-      transform: scale(0.95);
+    .result-action-btn:active { transform: scale(0.97); }
+    .result-action-btn.primary { background: var(--primary); color: #fff; box-shadow: 0 8px 20px rgba(58,123,213,0.3); }
+    .result-action-btn.secondary { background: var(--card); color: var(--text); border: 1.5px solid var(--border); }
+    .result-sub-actions {
+      display: flex;
+      justify-content: center;
+      padding-bottom: 40px;
+    }
+    .result-sub-btn {
+      background: none;
+      border: none;
+      color: var(--sub);
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: underline;
     }
 
-    /* Report Card (Screenshot View) */
-.report-overlay {
-  position:fixed;top:0;left:0;right:0;bottom:0;
-  background:#f5f8fc;
-  z-index:300;
-  display:none;
-  opacity:0;
-  transition:opacity .3s;
-  overflow-y:auto;
-}
-.report-overlay.show{display:block;}
-.report-overlay.visible{opacity:1;}
-.result-page { background: #fff; z-index: 1000; max-width: 480px; margin: 0 auto; width: 100%; min-height: 100vh; position: relative; padding-bottom: 20px;}
-.result-page * { box-sizing: border-box; }
-.xiaoetong-close-report {
-  position: absolute; top: 16px; right: 16px; z-index: 10;
-  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.08); border-radius: 50%; cursor: pointer;
-}
-.result-page .bg-cover { position: relative; width: 100%; height: 319px; max-width: 480px; margin: 0 auto; }
-.result-page .bg-cover .result-score-cover {
-  position: absolute; top: 108px; left: 50%; display: flex; flex-direction: column; align-items: center;
-  width: 165px; height: 165px; font-weight: 400; padding-top: 20px; font-size: 15px; text-align: center;
-  margin-left: -82.5px; color: #333; z-index: 1;
-}
-.result-page .bg-cover .result-score-cover .score { 
-  position: relative; font-size: 54px; font-weight: 700; line-height: 1.1; 
-  font-family: "DIN Alternate", "Helvetica Neue", Helvetica, Arial, sans-serif; 
-}
-.result-page .bg-cover .result-score-cover .score:after { content: "%"; position: absolute; bottom: 8px; right: -20px; font-size: 16px; font-weight: 400; font-family: PingFangSC-Regular, sans-serif; }
-.result-page .bg-cover img { position: absolute; top: 30px; width: 100%; left: 0; }
-.result-page .tip { width: 100%; text-align: center; font-size: 15px; font-family: PingFangSC-Regular,PingFang SC; font-weight: 400; color: #3f72d9; line-height: 20px; letter-spacing: 2px; margin-top: -15px; margin-bottom: 42px; }
-.result-page .result-info { justify-content: center; width: 100%; margin-bottom: 30px; display: flex; align-items: center; }
-.result-page .result-info .item { display: flex; align-items: center; flex-direction: column; width: 111px; }
-.result-page .result-info .item .title { color: #888; font-size: 13px; margin-bottom: 6px; }
-.result-page .result-info .item .content { font-weight: 400; font-size: 18px; color: #333; font-family: "DIN Alternate", "Helvetica Neue", Arial, sans-serif; }
-.result-page .result-info .split { height: 28px; border-left: 1px solid #eee; }
-.result-page .btn-group { display: flex; align-items: center; flex-direction: column; margin-bottom: 18px; }
-.result-page .btn-group .btn { width: 311px; height: 48px; line-height: 48px; text-align: center; border-radius: 24px; font-size: 18px; color: #fff; letter-spacing: 1px; background: #105cfb; cursor: pointer; }
-.result-page .btn-group .go-on-practice { color: #105cfb; margin-top: 22px; background: #fff; border: 1px solid #105cfb; }
-
-/* ── bottom nav ── */
+    /* ── bottom nav ── */
     .bottombar {
       position: fixed;
       bottom: 0;
@@ -945,7 +860,48 @@
         padding-bottom: calc(24px + env(safe-area-inset-bottom));
       }
     }
-  </style>
+  
+/* Report Card (Screenshot View) */
+.report-overlay {
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:#f5f8fc;
+  z-index:300;
+  display:none;
+  opacity:0;
+  transition:opacity .3s;
+  overflow-y:auto;
+}
+.report-overlay.show{display:block;}
+.report-overlay.visible{opacity:1;}
+.report-page-inner { background: #fff; z-index: 1000; max-width: 480px; margin: 0 auto; width: 100%; min-height: 100vh; position: relative; padding-bottom: 20px;}
+.report-page-inner * { box-sizing: border-box; }
+.xiaoetong-close-report {
+  position: absolute; top: 16px; right: 16px; z-index: 10;
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.08); border-radius: 50%; cursor: pointer;
+}
+.report-page-inner .bg-cover { position: relative; width: 100%; height: 319px; max-width: 480px; margin: 0 auto; }
+.report-page-inner .bg-cover .result-score-cover {
+  position: absolute; top: 108px; left: 50%; display: flex; flex-direction: column; align-items: center;
+  width: 165px; height: 165px; font-weight: 400; padding-top: 20px; font-size: 15px; text-align: center;
+  margin-left: -82.5px; color: #333; z-index: 1;
+}
+.report-page-inner .bg-cover .result-score-cover .score { 
+  position: relative; font-size: 54px; font-weight: 700; line-height: 1.1; 
+  font-family: "DIN Alternate", "Helvetica Neue", Helvetica, Arial, sans-serif; 
+}
+.report-page-inner .bg-cover .result-score-cover .score:after { content: "%"; position: absolute; bottom: 8px; right: -20px; font-size: 16px; font-weight: 400; font-family: PingFangSC-Regular, sans-serif; }
+.report-page-inner .bg-cover img { position: absolute; top: 30px; width: 100%; left: 0; }
+.report-page-inner .tip { width: 100%; text-align: center; font-size: 15px; font-family: PingFangSC-Regular,PingFang SC; font-weight: 400; color: #3f72d9; line-height: 20px; letter-spacing: 2px; margin-top: -15px; margin-bottom: 42px; }
+.report-page-inner .result-info { justify-content: center; width: 100%; margin-bottom: 30px; display: flex; align-items: center; }
+.report-page-inner .result-info .item { display: flex; align-items: center; flex-direction: column; width: 111px; }
+.report-page-inner .result-info .item .title { color: #888; font-size: 13px; margin-bottom: 6px; }
+.report-page-inner .result-info .item .content { font-weight: 400; font-size: 18px; color: #333; font-family: "DIN Alternate", "Helvetica Neue", Arial, sans-serif; }
+.report-page-inner .result-info .split { height: 28px; border-left: 1px solid #eee; }
+.report-page-inner .btn-group { display: flex; align-items: center; flex-direction: column; margin-bottom: 18px; }
+.report-page-inner .btn-group .btn { width: 311px; height: 48px; line-height: 48px; text-align: center; border-radius: 24px; font-size: 18px; color: #fff; letter-spacing: 1px; background: #105cfb; cursor: pointer; }
+
+</style>
 </head>
 
 <body>
@@ -1073,31 +1029,39 @@
     </div>
   </div>
 
-  <!-- Result Modal -->
-  <div class="modal-overlay result-wrapper" id="resultOverlay">
-    <div class="result-card">
-      <button class="result-close" id="resultCloseBtn" aria-label="关闭">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-      <h2 class="score-title">本次得分</h2>
-      <div class="score-val" id="scoreVal">0</div>
-      <div class="score-stats" id="scoreStats">用时: 00:00 | 错题: 0 | 未做: 0</div>
-      <div class="result-actions">
-        <button class="res-btn outline" id="reviewBtn">查看复盘</button>
-        <button class="res-btn outline" id="exportWrongBtn">导出错题</button>
-        <button class="res-btn primary" id="redoWrongBtn">补做错题</button>
-        <button class="res-btn screenshot" id="screenshotBtn">生成成绩单</button>
-        <button class="res-btn secondary" id="restartBtn">全新练习</button>
+  <!-- Result Fullscreen -->
+  <div class="result-fullscreen" id="resultFullscreen">
+    <div class="result-header">
+      <button class="result-back-btn" id="resultBackBtn">← 返回主页</button>
+      <span class="result-title">练习完成</span>
+    </div>
+    <div class="result-score-section">
+      <div class="score-circle">
+        <span class="score-number" id="resultScoreNum">0</span>
+        <span class="score-unit">分</span>
       </div>
+      <div class="score-sub">正确率</div>
+    </div>
+    <div class="result-stats-row">
+      <div class="stat-item"><span class="stat-val" id="statCorrect">0</span><span class="stat-label">答对</span></div>
+      <div class="stat-item"><span class="stat-val" id="statWrong">0</span><span class="stat-label">答错</span></div>
+      <div class="stat-item"><span class="stat-val" id="statUnans">0</span><span class="stat-label">未答</span></div>
+      <div class="stat-item"><span class="stat-val" id="statTime">00:00</span><span class="stat-label">用时</span></div>
+    </div>
+    <div class="result-main-actions">
+      <button class="result-action-btn primary" id="resultRetryBtn">再来一次</button>
+      <button class="result-action-btn secondary" id="screenshotBtn">生成成绩单</button>
+      <button class="result-action-btn secondary" id="exportWrongBtn">导出错题</button>
+    </div>
+    <div class="result-sub-actions">
+      <button class="result-sub-btn" id="resultRedoWrongBtn">仅做错题</button>
     </div>
   </div>
 
+  
   <!-- Report View -->
   <div class="report-overlay" id="reportOverlay">
-    <div class="result-page">
+    <div class="report-page-inner">
       <div class="xiaoetong-close-report" id="reportClose">
         <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </div>
@@ -1126,8 +1090,7 @@
           </div>
       </div>
       <div class="btn-group">
-          <div class="btn" id="reportReviewBtn">查看解析</div>
-          <div class="btn go-on-practice" id="reportClose2">继续练习</div>
+          <div class="btn go-on-practice" id="reportClose2" style="background:#105cfb; color:#fff; border:none; margin-top:0;">返回成绩</div>
       </div>
     </div>
   </div>
@@ -1493,7 +1456,7 @@
           var opt = q.options[originalIndex];
           var optContent = typeof opt === 'string' ? opt : opt.content;
           var displayLabel = String.fromCharCode(65 + i);
-          var originalLabel = displayLabel;
+          var originalLabel = opt.label || String.fromCharCode(65 + originalIndex);
 
           var cls = 'opt';
           if (showAnswers) {
@@ -1763,7 +1726,7 @@
         showResult();
       }
 
-      var resOverlay = document.getElementById('resultOverlay');
+            var resFullscreen = document.getElementById('resultFullscreen');
       function showResult() {
         var correctCount = 0;
         var answeredCount = 0;
@@ -1775,11 +1738,9 @@
           }
         });
         var score = Math.round((correctCount / questions.length) * 100);
-        document.getElementById('scoreVal').textContent = score;
         var unans = questions.length - answeredCount;
         var totalWrong = questions.length - correctCount;
 
-        // 把本次成绩写入 localStorage，主页读取显示
         try {
           var statKey = 'uav_quiz_stat_' + bankFile;
           localStorage.setItem(statKey, JSON.stringify({
@@ -1793,42 +1754,27 @@
           }));
         } catch (e) {}
 
-        document.getElementById('scoreStats').textContent = '用时: ' + formatTime(state.elapsedSec) + ' | 错题: ' + (totalWrong - unans) + ' | 未做: ' + unans;
-        document.getElementById('redoWrongBtn').style.display = totalWrong > 0 ? 'block' : 'none';
-        // 满分时隐藏"查看复盘"按钮
-        document.getElementById('reviewBtn').style.display = (totalWrong > 0) ? 'block' : 'none';
-        document.getElementById('exportWrongBtn').style.display = (totalWrong > 0) ? 'block' : 'none';
+        document.getElementById('resultScoreNum').textContent = score;
+        document.getElementById('statCorrect').textContent = correctCount;
+        document.getElementById('statWrong').textContent = totalWrong - unans;
+        document.getElementById('statUnans').textContent = unans;
+        document.getElementById('statTime').textContent = formatTime(state.elapsedSec);
 
-        resOverlay.classList.add('show');
-        requestAnimationFrame(function () { resOverlay.classList.add('visible'); });
+        var expBtn = document.getElementById('exportWrongBtn');
+        if (expBtn) expBtn.style.display = (totalWrong > 0) ? 'block' : 'none';
+        var rBtn = document.getElementById('resultRedoWrongBtn');
+        if (rBtn) rBtn.style.display = (totalWrong > 0) ? 'inline-block' : 'none';
 
+        resFullscreen.classList.add('show');
         renderSlide();
         updateNav();
       }
       function closeResult() {
-        resOverlay.classList.remove('visible');
-        setTimeout(function () { resOverlay.classList.remove('show'); }, 300);
+        resFullscreen.classList.remove('show');
       }
 
-      // 关闭成绩界面：已交卷时直接回主页，否则关闭弹窗
-      document.getElementById('resultCloseBtn').addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (state.submitted) {
-          // 用 replace 替换历史记录，按返回不会回到 quiz.html
-          window.location.replace('index.html');
-        } else {
-          closeResult();
-        }
-      });
-      // 点击遮罩也可以关闭
-      resOverlay.addEventListener('click', function (e) {
-        if (e.target === resOverlay) {
-          if (state.submitted) {
-            window.location.replace('index.html');
-          } else {
-            closeResult();
-          }
-        }
+      document.getElementById('resultBackBtn').addEventListener('click', function (e) {
+        window.location.replace('index.html');
       });
 
       // ── Review (复盘) Mode ──
@@ -1925,18 +1871,15 @@
         });
       }
 
-      document.getElementById('reviewBtn').addEventListener('click', enterReview);
-      document.getElementById('reviewCloseBtn').addEventListener('click', function() {
-        exitReview();
-      });
-      document.getElementById('exportWrongBtn').addEventListener('click', exportWrongQuestions);
-      document.getElementById('restartBtn').addEventListener('click', function () {
+            
+      
+      document.getElementById('resultRetryBtn').addEventListener('click', function () {
         closeResult();
         initSession('normal');
         startTimer();
         render();
       });
-      document.getElementById('redoWrongBtn').addEventListener('click', function () {
+      document.getElementById('resultRedoWrongBtn').addEventListener('click', function () {
         closeResult();
         var wrongIndices = [];
         state.order.forEach(function (idx) {
@@ -1948,12 +1891,14 @@
         startTimer();
         render();
       });
-
-      // ── Screenshot Report ──
-      document.getElementById('screenshotBtn').addEventListener('click', function () {
+    
+    
+      var exportBtn = document.getElementById('exportWrongBtn');
+      if (exportBtn) exportBtn.addEventListener('click', exportWrongQuestions);
+      
+      var ssBtn = document.getElementById('screenshotBtn');
+      if (ssBtn) ssBtn.addEventListener('click', function () {
         closeResult();
-
-        // Fill data
         var correctCount = 0;
         var answeredCount = 0;
         questions.forEach(function (q) {
@@ -1964,18 +1909,6 @@
           }
         });
         var score = Math.round((correctCount / questions.length) * 100);
-        var wrongCount = questions.length - correctCount;
-
-        var titleMap = {
-          '题库_无人机法律法规.json': '无人机法律法规',
-          '题库_20260702.json': '题库 1',
-          '题库_20260702 (1).json': '题库 2',
-          '题库_20260702 (2).json': '题库 3',
-          '题库_20260702 (3).json': '题库 4',
-          '题库_20260702 (4).json': '题库 5',
-          '题库_20260702 (5).json': '题库 6'
-        };
-
         document.getElementById('reportScore').textContent = score;
         document.getElementById('reportTotal').textContent = questions.length + '题';
         document.getElementById('reportCorrect').textContent = correctCount + '题';
@@ -1986,23 +1919,17 @@
         requestAnimationFrame(function () { report.classList.add('visible'); });
       });
 
-      document.getElementById('reportClose').addEventListener('click', function () {
+      var rpClose1 = document.getElementById('reportClose');
+      if (rpClose1) rpClose1.addEventListener('click', function () {
         var report = document.getElementById('reportOverlay');
         report.classList.remove('visible');
         setTimeout(function () { report.classList.remove('show'); showResult(); }, 300);
       });
-
-      document.getElementById('reportClose2').addEventListener('click', function () {
+      var rpClose2 = document.getElementById('reportClose2');
+      if (rpClose2) rpClose2.addEventListener('click', function () {
         var report = document.getElementById('reportOverlay');
         report.classList.remove('visible');
         setTimeout(function () { report.classList.remove('show'); showResult(); }, 300);
-      });
-
-      document.getElementById('reportReviewBtn').addEventListener('click', function () {
-        var report = document.getElementById('reportOverlay');
-        report.classList.remove('visible');
-        setTimeout(function () { report.classList.remove('show'); }, 300);
-        enterReview();
       });
 
     })();
