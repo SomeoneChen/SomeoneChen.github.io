@@ -123,6 +123,10 @@ html,body{
   font-size: 12px; padding: 2px 8px; border-radius: 6px;
   background: var(--water); color: var(--primary); font-weight: 500;
 }
+.bank-score {
+  background: linear-gradient(135deg, #67c23a, #409eff);
+  color: #fff;
+}
 
 .bank-action {
   width: 36px; height: 36px; border-radius: 50%;
@@ -256,16 +260,23 @@ html,body{
     
     // Check progress
     var storageKey = 'uav_quiz_state_' + bank.file;
+    var statKey = 'uav_quiz_stat_' + bank.file;
     var progressHtml = '<span>' + bank.desc + '</span>';
-    
+
     try {
-      var d = localStorage.getItem(storageKey);
-      if (d) {
-        var state = JSON.parse(d);
-        if (state.submitted) {
-          progressHtml += '<span class="bank-status">已完成交卷</span>';
-        } else if (state.records && Object.keys(state.records).length > 0) {
-          progressHtml += '<span class="bank-status">进行中 (第' + ((state.current || 0) + 1) + '题)</span>';
+      var stat = localStorage.getItem(statKey);
+      if (stat) {
+        var s = JSON.parse(stat);
+        progressHtml += '<span class="bank-status bank-score">' + s.score + '分 · 错' + s.wrong + '</span>';
+      } else {
+        var d = localStorage.getItem(storageKey);
+        if (d) {
+          var state = JSON.parse(d);
+          if (state.submitted) {
+            progressHtml += '<span class="bank-status">已完成交卷</span>';
+          } else if (state.records && Object.keys(state.records).length > 0) {
+            progressHtml += '<span class="bank-status">进行中 (第' + ((state.current || 0) + 1) + '题)</span>';
+          }
         }
       }
     } catch(e) {}

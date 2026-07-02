@@ -1137,7 +1137,7 @@
       var urlParams = new URLSearchParams(window.location.search);
       var bankFile = urlParams.get('bank');
       if (!bankFile) {
-        window.location.href = 'index.html';
+        window.location.replace('index.html');
         return;
       }
 
@@ -1779,6 +1779,20 @@
         var unans = questions.length - answeredCount;
         var totalWrong = questions.length - correctCount;
 
+        // 把本次成绩写入 localStorage，主页读取显示
+        try {
+          var statKey = 'uav_quiz_stat_' + bankFile;
+          localStorage.setItem(statKey, JSON.stringify({
+            score: score,
+            correct: correctCount,
+            wrong: totalWrong - unans,
+            unanswered: unans,
+            total: questions.length,
+            time: formatTime(state.elapsedSec),
+            timestamp: Date.now()
+          }));
+        } catch (e) {}
+
         document.getElementById('scoreStats').textContent = '用时: ' + formatTime(state.elapsedSec) + ' | 错题: ' + (totalWrong - unans) + ' | 未做: ' + unans;
         document.getElementById('redoWrongBtn').style.display = totalWrong > 0 ? 'block' : 'none';
         // 满分时隐藏"查看复盘"按钮
@@ -1796,14 +1810,25 @@
         setTimeout(function () { resOverlay.classList.remove('show'); }, 300);
       }
 
-      // 关闭成绩界面（仅关闭弹窗，返回答题界面查看已交卷内容）
+      // 关闭成绩界面：已交卷时直接回主页，否则关闭弹窗
       document.getElementById('resultCloseBtn').addEventListener('click', function (e) {
         e.stopPropagation();
-        closeResult();
+        if (state.submitted) {
+          // 用 replace 替换历史记录，按返回不会回到 quiz.html
+          window.location.replace('index.html');
+        } else {
+          closeResult();
+        }
       });
       // 点击遮罩也可以关闭
       resOverlay.addEventListener('click', function (e) {
-        if (e.target === resOverlay) closeResult();
+        if (e.target === resOverlay) {
+          if (state.submitted) {
+            window.location.replace('index.html');
+          } else {
+            closeResult();
+          }
+        }
       });
 
       // ── Review (复盘) Mode ──
