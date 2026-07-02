@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+<title>无人机法规 · 练习中心</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+:root {
+  --bg: #f5f8fc;
+  --card: #fff;
+  --primary: #3a7bd5;
+  --accent: #5bb8f5;
+  --water: #e8f4fd;
+  --text: #2c3e50;
+  --sub: #8a9bb5;
+  --border: #e4ecf5;
+  --header-bg: rgba(255,255,255,.88);
+}
+[data-theme="dark"] {
+  --bg: #121212;
+  --card: #1e1e1e;
+  --primary: #4a90e2;
+  --accent: #63b3ed;
+  --water: #1a2635;
+  --text: #e0e0e0;
+  --sub: #8899a6;
+  --border: #2c2c2c;
+  --header-bg: rgba(30,30,30,.88);
+}
+
+html,body{
+  height:100%;
+  font-family:'Noto Sans SC','Hiragino Sans','PingFang SC',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+.topbar{
+  position:fixed;top:0;left:0;right:0;
+  height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  background:var(--header-bg);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  z-index:100;
+}
+.title{font-weight:600;font-size:16px;color:var(--text);letter-spacing:.5px}
+.icon-btn{
+  width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  border:none;background:var(--water);
+  border-radius:8px;cursor:pointer;
+  color:var(--primary);
+  transition:background .2s;
+}
+.icon-btn:active{background:var(--border)}
+.icon-btn svg{width:18px;height:18px;}
+.moon-icon{display:none;}
+[data-theme="dark"] .sun-icon{display:none;}
+[data-theme="dark"] .moon-icon{display:block;}
+
+.main-content {
+  padding: 80px 16px 32px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.header-hero {
+  margin-bottom: 24px;
+}
+.header-hero h1 {
+  font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 8px;
+}
+.header-hero p {
+  font-size: 14px; color: var(--sub); line-height: 1.5;
+}
+
+.bank-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.bank-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.bank-card:active {
+  transform: scale(0.98);
+}
+.bank-card:hover {
+  border-color: var(--primary);
+}
+
+.bank-info {
+  flex: 1;
+}
+.bank-title {
+  font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px;
+}
+.bank-meta {
+  font-size: 13px; color: var(--sub);
+  display: flex; align-items: center; gap: 12px;
+}
+.bank-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; padding: 2px 8px; border-radius: 6px;
+  background: var(--water); color: var(--primary); font-weight: 500;
+}
+
+.bank-action {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-left: 16px;
+  box-shadow: 0 4px 10px rgba(58,123,213,0.3);
+}
+.bank-action svg { width: 18px; height: 18px; }
+
+/* Page transition overlay */
+.page-transition-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg); z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease-out;
+}
+.page-transition-overlay.active {
+  opacity: 1; pointer-events: auto;
+}
+.page-transition-overlay .transition-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--water);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <span class="title">练习中心</span>
+  <button class="icon-btn" id="themeBtn" aria-label="切换主题">
+    <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+</header>
+
+<main class="main-content">
+  <div class="header-hero">
+    <h1>无人机法规题库</h1>
+    <p>选择你要练习的题库，系统会自动保存你的练习进度。</p>
+  </div>
+  
+  <div class="bank-grid" id="bankGrid">
+    <!-- Generated dynamically -->
+  </div>
+</main>
+
+<!-- Page transition overlay -->
+<div class="page-transition-overlay" id="pageTransition">
+  <div class="transition-spinner"></div>
+  <div style="color:var(--sub);font-size:14px;">加载中...</div>
+</div>
+
+<script>
+(function() {
+  // Define themes
+  var theme = localStorage.getItem('uav_quiz_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+
+  // 浏览器返回时立即隐藏覆盖层
+  function hideOverlay() {
+    var overlay = document.getElementById('pageTransition');
+    if (overlay) overlay.style.display = 'none';
+  }
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) hideOverlay();
+  });
+  hideOverlay();
+
+  document.getElementById('themeBtn').addEventListener('click', function() {
+    theme = theme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('uav_quiz_theme', theme); } catch (e) {}
+  });
+
+  // 监听跨页面 theme 变化
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'uav_quiz_theme' && e.newValue) {
+      theme = e.newValue;
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  });
+  // bfcache 恢复时也同步
+  window.addEventListener('pageshow', function(e) {
+    var t = localStorage.getItem('uav_quiz_theme');
+    if (t && t !== theme) {
+      theme = t;
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  });
+
+  // Banks definition
+  var banks = [
+    { file: '理论_多轴题库.json', name: '理论：多轴题库', desc: '163题 · 最优先' },
+    { file: '理论_无人机法律法规.json', name: '理论：无人机法律法规', desc: '109题 · 优先' },
+    { file: '理论_空中交通管制.json', name: '理论：空中交通管制', desc: '6题 · 优先' },
+    { file: '理论_无人机驾驶员飞行手册.json', name: '理论：无人机驾驶员飞行手册', desc: '35题 · 优先' },
+    { file: '理论_无人机概述.json', name: '理论：无人机概述', desc: '9题 · 优先' },
+    { file: '理论_无人机系统组成及介绍.json', name: '理论：无人机系统组成及介绍', desc: '42题 · 优先' },
+    { file: '理论_无人机农业植保.json', name: '理论：无人机农业植保', desc: '25题 · 优先' },
+    { file: '理论_无人机飞行原理与飞行性能.json', name: '理论：无人机飞行原理与飞行性能', desc: '288题 · 次优先' },
+    { file: '理论_气象.json', name: '理论：气象', desc: '133题 · 次优先' },
+    { file: '民航局执照新增题库.json', name: '民航局执照新增题库', desc: '225题' },
+    { file: '理论_旋翼无人机_可不背.json', name: '理论：旋翼无人机', desc: '75题 · 可不背' },
+    { file: '理论_无人机任务规划_可不背.json', name: '理论：无人机任务规划', desc: '45题 · 可不背' },
+    { file: '理论_起降阶段操控技术_可不背.json', name: '理论：起降阶段操控技术', desc: '116题 · 可不背' }
+  ];
+
+  var grid = document.getElementById('bankGrid');
+  
+  banks.forEach(function(bank) {
+    var a = document.createElement('a');
+    a.className = 'bank-card';
+    a.href = 'quiz.html?bank=' + encodeURIComponent(bank.file);
+    a.addEventListener('click', function(e) {
+      e.preventDefault();
+      var href = this.getAttribute('href');
+      var overlay = document.getElementById('pageTransition');
+      overlay.classList.add('active');
+      setTimeout(function() {
+        window.location.href = href;
+      }, 250);
+    });
+    
+    // Check progress
+    var storageKey = 'uav_quiz_state_' + bank.file;
+    var progressHtml = '<span>' + bank.desc + '</span>';
+    
+    try {
+      var d = localStorage.getItem(storageKey);
+      if (d) {
+        var state = JSON.parse(d);
+        if (state.submitted) {
+          progressHtml += '<span class="bank-status">已完成交卷</span>';
+        } else if (state.records && Object.keys(state.records).length > 0) {
+          progressHtml += '<span class="bank-status">进行中 (第' + ((state.current || 0) + 1) + '题)</span>';
+        }
+      }
+    } catch(e) {}
+
+    a.innerHTML = `
+      <div class="bank-info">
+        <div class="bank-title">${bank.name}</div>
+        <div class="bank-meta">${progressHtml}</div>
+      </div>
+      <div class="bank-action">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    `;
+    
+    grid.appendChild(a);
+  });
+
+})();
+</script>
+
+</body>
+</html>
