@@ -315,7 +315,8 @@ html,body{
     { file: '民航局执照新增题库.json', name: '民航局执照新增题库', desc: '225题' },
     { file: '理论_旋翼无人机_可不背.json', name: '理论：旋翼无人机', desc: '75题 · 可不背' },
     { file: '理论_无人机任务规划_可不背.json', name: '理论：无人机任务规划', desc: '45题 · 可不背' },
-    { file: '理论_起降阶段操控技术_可不背.json', name: '理论：起降阶段操控技术', desc: '116题 · 可不背' }
+    { file: '理论_起降阶段操控技术_可不背.json', name: '理论：起降阶段操控技术', desc: '116题 · 可不背' },
+    { file: '模拟题考试.json', name: '模拟题考试', desc: '7题 · 模拟真题' }
   ];
 
   var grid = document.getElementById('bankGrid');
@@ -327,9 +328,11 @@ html,body{
   
   var coreBanks = [];
   var advancedBanks = [];
+  var mockBanks = [];
   
   banks.forEach(function(bank, idx) {
     if (idx < 7) coreBanks.push(bank);
+    else if (bank.file === '模拟题考试.json') mockBanks.push(bank);
     else advancedBanks.push(bank);
   });
 
@@ -362,6 +365,7 @@ html,body{
       var statusHtml = '';
       var icon = '📚';
       if (title.includes('必背')) icon = '📌';
+      else if (title.includes('模拟题')) icon = '📝';
       
       var qTotalMatch = bank.desc.match(/(\d+)题/);
       var qTotal = qTotalMatch ? parseInt(qTotalMatch[1]) : 0;
@@ -424,6 +428,7 @@ html,body{
 
   renderGroup('📌 核心必背', coreBanks);
   renderGroup('📚 进阶练习', advancedBanks);
+  renderGroup('📝 模拟题考试', mockBanks);
 
   document.getElementById('totalCompleted').textContent = totalCompleted;
   document.getElementById('totalQuestions').textContent = totalQuestions;
