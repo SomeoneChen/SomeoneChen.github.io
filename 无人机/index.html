@@ -17,7 +17,6 @@
   --water: #e8f4fd;
   --text: #2c3e50;
   --sub: #8a9bb5;
-  --correct: #4caf93;
   --border: #e4ecf5;
   --header-bg: rgba(255,255,255,.88);
 }
@@ -29,7 +28,6 @@
   --water: #1a2635;
   --text: #e0e0e0;
   --sub: #8899a6;
-  --correct: #3a9679;
   --border: #2c2c2c;
   --header-bg: rgba(30,30,30,.88);
 }
@@ -388,8 +386,7 @@ html,body{
         totalQuestions += (stat.total || qTotal);
         totalScoreSum += (stat.score || 0);
         pct = 100;
-        var totWrong = (stat.wrong || 0) + (stat.unanswered || 0);
-        statusHtml = '✓ ' + (stat.correct || 0) + '题 · 错' + totWrong + '题 · 上次' + stat.score + '分';
+        statusHtml = '✓ ' + (stat.correct || 0) + '题 · 错' + (stat.wrong || 0) + '题 · 上次' + stat.score + '分';
         
         // if user restarted but has stat
         if (state && !state.submitted && state.records && Object.keys(state.records).length > 0) {
