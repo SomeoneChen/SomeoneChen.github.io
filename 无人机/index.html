@@ -316,7 +316,7 @@ html,body{
     { file: '理论_旋翼无人机_可不背.json', name: '理论：旋翼无人机', desc: '75题 · 可不背' },
     { file: '理论_无人机任务规划_可不背.json', name: '理论：无人机任务规划', desc: '45题 · 可不背' },
     { file: '理论_起降阶段操控技术_可不背.json', name: '理论：起降阶段操控技术', desc: '116题 · 可不背' },
-    { file: '模拟题考试.json', name: '模拟题考试', desc: '7题 · 模拟真题' }
+    { file: '模拟题考试.json', name: '模拟题考试', desc: '277题 · 随机抽100题' }
   ];
 
   var grid = document.getElementById('bankGrid');
@@ -369,6 +369,10 @@ html,body{
       
       var qTotalMatch = bank.desc.match(/(\d+)题/);
       var qTotal = qTotalMatch ? parseInt(qTotalMatch[1]) : 0;
+      // 模拟题考试：每次从题库池中随机抽 100 题，进度按 100 题计算
+      if (bank.file === '模拟题考试.json') {
+        qTotal = 100;
+      }
       
       var state = null;
       var stat = null;

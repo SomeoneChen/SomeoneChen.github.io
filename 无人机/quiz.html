@@ -28,6 +28,7 @@
       --border: #e4ecf5;
       --overlay: rgba(44, 62, 80, .3);
       --header-bg: rgba(255, 255, 255, .88);
+      --font-scale: 1;
     }
 
     [data-theme="dark"] {
@@ -114,6 +115,79 @@
     .icon-btn svg {
       width: 18px;
       height: 18px;
+    }
+
+    .font-btn {
+      font-size: 13px;
+      font-weight: 700;
+      width: 32px;
+      height: 32px;
+      font-family: 'Noto Sans SC', system-ui, sans-serif;
+    }
+
+    /* font size popup */
+    .font-popup {
+      position: absolute;
+      top: 44px;
+      right: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      z-index: 200;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      min-width: 200px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .font-popup.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .font-popup-label {
+      font-size: 12px;
+      color: var(--sub);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .font-popup-value {
+      font-weight: 600;
+      color: var(--primary);
+      font-variant-numeric: tabular-nums;
+    }
+    .font-popup-slider {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--water);
+      outline: none;
+      cursor: pointer;
+    }
+    .font-popup-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(58,123,213,0.3);
+    }
+    .font-popup-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 6px rgba(58,123,213,0.3);
     }
 
     .moon-icon {
@@ -232,7 +306,7 @@
     }
 
     .q-stem {
-      font-size: 16px;
+      font-size: calc(16px * var(--font-scale));
       line-height: 1.6;
       font-weight: 500;
       margin-bottom: 24px;
@@ -282,7 +356,7 @@
     }
 
     .opt .content {
-      font-size: 15px;
+      font-size: calc(15px * var(--font-scale));
       line-height: 1.5;
       padding-top: 2px;
       color: var(--text);
@@ -332,7 +406,7 @@
       padding: 16px;
       background: var(--water);
       border-radius: 12px;
-      font-size: 14px;
+      font-size: calc(14px * var(--font-scale));
       line-height: 1.7;
       color: var(--sub);
       display: none;
@@ -737,7 +811,14 @@
       font-size: 18px;
       font-weight: 500;
       color: var(--text);
-      margin-bottom: 24px;
+      margin-bottom: 12px;
+    }
+
+    .pause-hint {
+      font-size: 13px;
+      color: var(--sub);
+      cursor: pointer;
+      user-select: none;
     }
 
     .resume-btn {
@@ -953,15 +1034,6 @@
           <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
       </button>
-      <button class="icon-btn" id="cardBtn" aria-label="答题卡">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-          stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1.5" />
-          <rect x="14" y="3" width="7" height="7" rx="1.5" />
-          <rect x="3" y="14" width="7" height="7" rx="1.5" />
-          <rect x="14" y="14" width="7" height="7" rx="1.5" />
-        </svg>
-      </button>
       <button class="icon-btn" id="randOptsBtn" aria-label="选项乱序">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/>
@@ -988,8 +1060,15 @@
     </div>
     <span class="timer" id="timer" style="cursor:pointer;" title="点击暂停">00:00</span>
     <div class="right-actions">
-
+      <button class="icon-btn font-btn" id="fontBtn" aria-label="字号" title="字号">A</button>
       <button class="text-btn" id="submitBtn">交卷</button>
+    </div>
+    <div class="font-popup" id="fontPopup">
+      <div class="font-popup-label">
+        <span>字号大小</span>
+        <span class="font-popup-value" id="fontValue">100%</span>
+      </div>
+      <input type="range" class="font-popup-slider" id="fontSlider" min="75" max="150" step="1" value="100">
     </div>
   </header>
 
@@ -1001,14 +1080,8 @@
     <div class="slide-wrapper" id="slideWrapper"></div>
 
     <div class="pause-overlay" id="pauseOverlay">
-      <svg class="pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="10" y1="15" x2="10" y2="9" />
-        <line x1="14" y1="15" x2="14" y2="9" />
-      </svg>
       <div class="pause-text">练习已暂停</div>
-      <button class="resume-btn" id="resumeBtn">继续练习</button>
+      <div class="pause-hint">点击任意位置继续</div>
     </div>
   </div>
 
@@ -1020,7 +1093,7 @@
       </svg>
       上一题
     </button>
-    <span class="counter" id="counter"></span>
+    <span class="counter" id="counter" style="cursor:pointer;"></span>
     <button class="nav-btn" id="nextBtn">
       下一题
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -1167,11 +1240,26 @@
         }
       });
 
-      // Load JSON
-      fetch(bankFile)
+      // 模拟题考试：标题匹配时随机抽取 N 题
+      var MOCK_EXAM_TITLE = '模拟题考试';
+      var MOCK_EXAM_SAMPLE_SIZE = 100;
+
+      // 字体大小
+      var FONT_SCALE_KEY = 'uav_quiz_font_scale';
+      var fontScale = parseFloat(localStorage.getItem(FONT_SCALE_KEY)) || 1;
+      fontScale = Math.max(0.75, Math.min(1.5, fontScale));
+      document.documentElement.style.setProperty('--font-scale', fontScale);
+
+      // Load JSON (加 ?v= 防缓存)
+      var cacheBust = '?v=' + Date.now();
+      fetch(bankFile + cacheBust)
         .then(function (res) { return res.json(); })
         .then(function (data) {
           RAW_DATA = normalizeQuizData(data);
+          // 同步更新页面标题，便于浏览器标签/历史记录辨识
+          if (RAW_DATA.title) {
+            document.title = (RAW_DATA.title === MOCK_EXAM_TITLE ? '模拟题考试' : RAW_DATA.title) + ' · 无人机法规练习';
+          }
           init();
           // 在 init 渲染完成后再隐藏 loader
           requestAnimationFrame(function () {
@@ -1280,11 +1368,23 @@
         } catch (e) { }
       }
 
+      // 模拟题考试：标题匹配时随机抽取 N 题（变量声明提前到 load 之前以避免 TDZ/顺序问题）
+      // MOCK_EXAM_TITLE / MOCK_EXAM_SAMPLE_SIZE 已在脚本顶部声明
+      function isMockExam() {
+        return RAW_DATA && RAW_DATA.title === MOCK_EXAM_TITLE;
+      }
+
       function initSession(mode, specificIndices) {
         if (mode === 'normal') {
           var indices = [];
           for (var i = 0; i < RAW_DATA.questions.length; i++) indices.push(i);
-          state.order = shuffle(indices);
+          if (isMockExam() && RAW_DATA.questions.length > MOCK_EXAM_SAMPLE_SIZE) {
+            // 模拟题考试：随机抽取 N 题
+            var picked = shuffle(indices).slice(0, MOCK_EXAM_SAMPLE_SIZE);
+            state.order = picked;
+          } else {
+            state.order = shuffle(indices);
+          }
         } else {
           state.order = specificIndices;
         }
@@ -1372,7 +1472,9 @@
       });
       window.addEventListener('blur', handleBlur);
       window.addEventListener('focus', handleFocus);
-      document.getElementById('resumeBtn').addEventListener('click', handleManualResume);
+      document.getElementById('pauseOverlay').addEventListener('click', function () {
+        if (manualPaused) handleManualResume();
+      });
       document.getElementById('timer').addEventListener('click', function(){
         if (!manualPaused) handleManualPause();
       });
@@ -1427,6 +1529,82 @@
           applyRandOptsBtn();
         }
       });
+
+      // ── 字体缩放 ──
+      function applyFontScale(scale) {
+        scale = Math.max(0.75, Math.min(1.5, scale));
+        fontScale = scale;
+        document.documentElement.style.setProperty('--font-scale', scale);
+        var slider = document.getElementById('fontSlider');
+        var val = document.getElementById('fontValue');
+        if (slider) slider.value = Math.round(scale * 100);
+        if (val) val.textContent = Math.round(scale * 100) + '%';
+        try { localStorage.setItem(FONT_SCALE_KEY, String(scale)); } catch (e) {}
+      }
+      var fontPopup = document.getElementById('fontPopup');
+      var fontBtn = document.getElementById('fontBtn');
+      fontBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        fontPopup.classList.toggle('visible');
+      });
+      document.getElementById('fontSlider').addEventListener('input', function () {
+        applyFontScale(parseFloat(this.value) / 100);
+      });
+      // 点击外部关闭
+      document.addEventListener('click', function (e) {
+        if (!fontPopup.contains(e.target) && e.target !== fontBtn && !fontBtn.contains(e.target)) {
+          fontPopup.classList.remove('visible');
+        }
+      });
+      // 初始化滑杆位置
+      applyFontScale(fontScale);
+
+      // ── 正确音效 ──
+      var SOUND_KEY = 'uav_quiz_sound_on';
+      var soundOn = localStorage.getItem(SOUND_KEY) === '1';
+      var rightSfx = new Audio('right.wav');
+      rightSfx.playbackRate = 1.4;
+      function playRightSfx() {
+        if (!soundOn) return;
+        try {
+          rightSfx.currentTime = 0;
+          rightSfx.play().catch(function(){});
+        } catch(e) {}
+      }
+      var sfxLongTimer = null;
+      var sfxLongPressed = false;
+      var submitBtnEl = document.getElementById('submitBtn');
+      function sfxPressStart() {
+        sfxLongPressed = false;
+        sfxLongTimer = setTimeout(function() {
+          sfxLongPressed = true;
+          soundOn = !soundOn;
+          try { localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); } catch(e) {}
+          var toast = document.createElement('div');
+          toast.textContent = soundOn ? '🔊 音效已开启' : '🔇 音效已关闭';
+          toast.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:8px;font-size:13px;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;';
+          document.body.appendChild(toast);
+          requestAnimationFrame(function(){ toast.style.opacity = '1'; });
+          setTimeout(function(){ toast.style.opacity='0'; setTimeout(function(){ toast.remove(); }, 200); }, 1000);
+          if (soundOn) playRightSfx();
+        }, 600);
+      }
+      function sfxPressEnd() {
+        if (sfxLongTimer) { clearTimeout(sfxLongTimer); sfxLongTimer = null; }
+      }
+      submitBtnEl.addEventListener('mousedown', sfxPressStart);
+      submitBtnEl.addEventListener('touchstart', sfxPressStart, { passive: true });
+      submitBtnEl.addEventListener('mouseup', sfxPressEnd);
+      submitBtnEl.addEventListener('mouseleave', sfxPressEnd);
+      submitBtnEl.addEventListener('touchend', sfxPressEnd);
+      submitBtnEl.addEventListener('touchcancel', sfxPressEnd);
+      submitBtnEl.addEventListener('click', function(e) {
+        if (sfxLongPressed) {
+          e.preventDefault();
+          e.stopPropagation();
+          sfxLongPressed = false;
+        }
+      }, true);
 
       // ── Render ──
       function render() {
@@ -1539,7 +1717,10 @@
           var lb = o.getAttribute('data-label');
           if (lb === q.answer) {
             o.classList.add('correct');
-            if (isCorrect) o.classList.add('sparkle');
+            if (isCorrect) {
+              o.classList.add('sparkle');
+              playRightSfx();
+            }
           }
           if (lb === selected && !isCorrect) {
             o.classList.add('wrong');
@@ -1655,7 +1836,7 @@
 
       // ── Answer Card ──
       var cardOverlay = document.getElementById('cardOverlay');
-      document.getElementById('cardBtn').addEventListener('click', openCard);
+      document.getElementById('counter').addEventListener('click', openCard);
       document.getElementById('acClose').addEventListener('click', closeCard);
       cardOverlay.addEventListener('click', function (e) { if (e.target === cardOverlay) closeCard(); });
 
