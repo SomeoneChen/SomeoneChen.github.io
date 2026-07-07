@@ -1240,8 +1240,9 @@
         }
       });
 
-      // 模拟题考试：标题匹配时随机抽取 N 题
+      // 模拟题考试：标题或文件名匹配时随机抽取 N 题
       var MOCK_EXAM_TITLE = '模拟题考试';
+      var MOCK_EXAM_FILE = '模拟题考试.json';
       var MOCK_EXAM_SAMPLE_SIZE = 100;
 
       // 字体大小
@@ -1326,6 +1327,19 @@
         loadState();
         applyTheme(); applyRandOptsBtn();
 
+        // 模拟题考试：检测题库内容是否变化，变化则丢弃旧进度，重新抽样
+        if (isMockExam()) {
+          var sig = getBankSignature();
+          if (state.bankSig && state.bankSig !== sig) {
+            state.order = [];
+            state.records = {};
+            state.elapsedSec = 0;
+            state.submitted = false;
+            state.current = 0;
+          }
+          state.bankSig = sig;
+        }
+
         if (!state.order || state.order.length === 0) {
           initSession('normal');
         } else {
@@ -1368,10 +1382,24 @@
         } catch (e) { }
       }
 
-      // 模拟题考试：标题匹配时随机抽取 N 题（变量声明提前到 load 之前以避免 TDZ/顺序问题）
-      // MOCK_EXAM_TITLE / MOCK_EXAM_SAMPLE_SIZE 已在脚本顶部声明
+      // 模拟题考试：标题或文件名匹配时随机抽取 N 题
+      // MOCK_EXAM_TITLE / MOCK_EXAM_FILE / MOCK_EXAM_SAMPLE_SIZE 已在脚本顶部声明
       function isMockExam() {
-        return RAW_DATA && RAW_DATA.title === MOCK_EXAM_TITLE;
+        if (!RAW_DATA) return false;
+        // 优先以 JSON 的 title 为准；若 title 不是模拟题（如 "无人机题库合并"），
+        // 兜底按文件名判断，确保 模拟题考试.json 始终走抽样逻辑
+        if (RAW_DATA.title === MOCK_EXAM_TITLE) return true;
+        if (bankFile === MOCK_EXAM_FILE) return true;
+        return false;
+      }
+
+      // 题库内容签名：用于检测题库是否被更新（题量/首末题变化），变化则重置旧进度
+      function getBankSignature() {
+        if (!RAW_DATA || !RAW_DATA.questions || RAW_DATA.questions.length === 0) return '';
+        var qs = RAW_DATA.questions;
+        var first = qs[0];
+        var last = qs[qs.length - 1];
+        return qs.length + '|' + (first.id || first.stem || '') + '|' + (last.id || last.stem || '');
       }
 
       function initSession(mode, specificIndices) {
