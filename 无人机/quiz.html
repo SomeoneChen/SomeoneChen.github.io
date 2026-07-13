@@ -56,6 +56,8 @@
       font-weight: 400;
       -webkit-font-smoothing: antialiased;
       transition: background 0.3s, color 0.3s;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     /* ── top bar ── */
@@ -878,8 +880,41 @@
 .result-page .btn-group { display: flex; align-items: center; flex-direction: column; margin-bottom: 18px; }
 .result-page .btn-group .btn { width: 311px; height: 48px; line-height: 48px; text-align: center; border-radius: 24px; font-size: 18px; color: #fff; letter-spacing: 1px; background: #105cfb; cursor: pointer; }
 .result-page .btn-group .go-on-practice { color: #105cfb; margin-top: 22px; background: #fff; border: 1px solid #105cfb; }
-
-/* ── bottom nav ── */
+.mock-report-frame {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  height: 100vh;
+  margin: 0 auto;
+  border: 0;
+  background: #fff;
+}
+.mock-report-frame[hidden] {
+  display: none !important;
+}
+.mock-report-exit {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-240px);
+  z-index: 1002;
+  width: 64px;
+  height: 64px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.mock-report-exit[hidden] {
+  display: none !important;
+}
+@media (max-width: 480px) {
+  .mock-report-exit {
+    left: 0;
+    transform: none;
+  }
+}/* ── bottom nav ── */
     .bottombar {
       position: fixed;
       bottom: 0;
@@ -1157,7 +1192,7 @@
 
   <!-- Report View -->
   <div class="report-overlay" id="reportOverlay">
-    <div class="result-page">
+    <div class="result-page" id="legacyReportPage">
       <div class="xiaoetong-close-report" id="reportClose">
         <svg viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </div>
@@ -1190,6 +1225,8 @@
           <div class="btn go-on-practice" id="reportClose2">继续练习</div>
       </div>
     </div>
+    <iframe id="mockReportFrame" class="mock-report-frame" src="%E7%90%86%E8%AE%BA%E6%A8%A1%E6%8B%9F%E8%80%83_%E5%8D%95%E6%96%87%E4%BB%B6%E7%89%88.html" hidden></iframe>
+    <button id="mockReportExit" class="mock-report-exit" type="button" aria-label="退出成绩单" hidden></button>
   </div>
 
   <script>
@@ -2091,11 +2128,15 @@
         render();
       });
 
-      // ── Screenshot Report ──
-      document.getElementById('screenshotBtn').addEventListener('click', function () {
-        closeResult();
+      function pad2(n) {
+        return n < 10 ? '0' + n : String(n);
+      }
 
-        // Fill data
+      function formatDateTime(d) {
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+      }
+
+      function getReportStats() {
         var correctCount = 0;
         var answeredCount = 0;
         questions.forEach(function (q) {
@@ -2105,47 +2146,176 @@
             if (rec.correct) correctCount++;
           }
         });
-        var score = Math.round((correctCount / questions.length) * 100);
-        var wrongCount = questions.length - correctCount;
-
-        var titleMap = {
-          '题库_无人机法律法规.json': '无人机法律法规',
-          '题库_20260702.json': '题库 1',
-          '题库_20260702 (1).json': '题库 2',
-          '题库_20260702 (2).json': '题库 3',
-          '题库_20260702 (3).json': '题库 4',
-          '题库_20260702 (4).json': '题库 5',
-          '题库_20260702 (5).json': '题库 6'
+        var total = questions.length || 0;
+        var score = total ? Math.round((correctCount / total) * 100) : 0;
+        var unanswered = total - answeredCount;
+        var wrongAnswered = answeredCount - correctCount;
+        return {
+          total: total,
+          correct: correctCount,
+          answered: answeredCount,
+          unanswered: unanswered,
+          wrongAnswered: wrongAnswered,
+          score: score,
+          average: (70 + Math.random() * 10).toFixed(2),
+          time: formatTime(state.elapsedSec),
+          elapsedSec: state.elapsedSec,
+          submitTime: formatDateTime(new Date())
         };
+      }
 
-        document.getElementById('reportScore').textContent = score;
-        document.getElementById('reportTotal').textContent = questions.length + '题';
-        document.getElementById('reportCorrect').textContent = correctCount + '题';
-        document.getElementById('reportTime').textContent = formatTime(state.elapsedSec);
-
+      function showReportOverlay() {
         var report = document.getElementById('reportOverlay');
         report.classList.add('show');
         requestAnimationFrame(function () { report.classList.add('visible'); });
+      }
+
+      function closeReportOverlay(returnToResult) {
+        var report = document.getElementById('reportOverlay');
+        document.getElementById('mockReportExit').hidden = true;
+        report.classList.remove('visible');
+        setTimeout(function () {
+          report.classList.remove('show');
+          if (returnToResult) showResult();
+        }, 300);
+      }
+
+      function fillLegacyReport(stats) {
+        document.getElementById('legacyReportPage').hidden = false;
+        document.getElementById('mockReportFrame').hidden = true;
+        document.getElementById('mockReportExit').hidden = true;
+        document.getElementById('reportScore').textContent = stats.score;
+        document.getElementById('reportTotal').textContent = stats.total + '题';
+        document.getElementById('reportCorrect').textContent = stats.correct + '题';
+        document.getElementById('reportTime').textContent = stats.time;
+      }
+
+      function formatDurationLong(s) {
+        var h = Math.floor(s / 3600);
+        var m = Math.floor((s % 3600) / 60);
+        var sec = s % 60;
+        return pad2(h) + ':' + pad2(m) + ':' + pad2(sec);
+      }
+
+      function setText(root, selector, value) {
+        var el = root.querySelector(selector);
+        if (el) el.textContent = value;
+      }
+
+      function wireMockReportButtons(doc) {
+        var restartBtn = doc.querySelector('.test-button');
+        if (restartBtn && !restartBtn.dataset.quizWired) {
+          restartBtn.dataset.quizWired = '1';
+          restartBtn.addEventListener('click', function (event) {
+            event.preventDefault();
+            closeReportOverlay(false);
+            initSession('normal');
+            startTimer();
+            render();
+          });
+        }
+
+        var detailBtn = doc.querySelector('.check-detail-button');
+        if (detailBtn && !detailBtn.dataset.quizWired) {
+          detailBtn.dataset.quizWired = '1';
+          detailBtn.addEventListener('click', function (event) {
+            event.preventDefault();
+            closeReportOverlay(false);
+            enterReview();
+          });
+        }
+      }
+
+      function applyMockReportStats(stats) {
+        var frame = document.getElementById('mockReportFrame');
+        var doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        if (!doc) return;
+
+        setText(doc, '.exam-name', '理论模拟考');
+        var infoItems = doc.querySelectorAll('.exam-info-item');
+        if (infoItems[0]) infoItems[0].textContent = '共' + stats.total + '题';
+        if (infoItems[1]) infoItems[1].textContent = '总计100分';
+        if (infoItems[2]) infoItems[2].textContent = '交卷时间' + stats.submitTime;
+
+        setText(doc, '.result-score-value', stats.score);
+        var scoreNums = doc.querySelectorAll('.score-num');
+        if (scoreNums[0]) scoreNums[0].textContent = stats.average;
+        if (scoreNums[1]) scoreNums[1].textContent = formatDurationLong(stats.elapsedSec);
+
+        var flexItems = doc.querySelectorAll('.exam-info-wrapper .flex-item');
+        var values = [stats.total, stats.correct, stats.wrongAnswered, stats.unanswered];
+        for (var i = 0; i < flexItems.length && i < values.length; i++) {
+          var valueEl = flexItems[i].querySelector('.fs-16');
+          if (valueEl) valueEl.textContent = values[i] + '题';
+        }
+
+        wireMockReportButtons(doc);
+      }
+
+      function refreshMockReportStats(stats) {
+        try {
+          applyMockReportStats(stats);
+        } catch (err) {
+          console.warn('mock report template patch failed', err);
+        }
+      }
+
+      function fillMockReport(stats) {
+        var frame = document.getElementById('mockReportFrame');
+        document.getElementById('legacyReportPage').hidden = true;
+        document.getElementById('mockReportExit').hidden = false;
+        frame.hidden = false;
+        // 把统计数据写入 localStorage，由 iframe 页面读取
+        try {
+          localStorage.setItem('uav_mock_report_stats', JSON.stringify(stats));
+        } catch (e) {}
+        frame.onload = function () {
+          refreshMockReportStats(stats);
+          requestAnimationFrame(function () {
+            refreshMockReportStats(stats);
+          });
+          setTimeout(function () {
+            refreshMockReportStats(stats);
+          }, 120);
+          setTimeout(function () {
+            refreshMockReportStats(stats);
+          }, 500);
+          setTimeout(function () {
+            refreshMockReportStats(stats);
+          }, 1200);
+        };
+        frame.src = '%E7%90%86%E8%AE%BA%E6%A8%A1%E6%8B%9F%E8%80%83_%E5%8D%95%E6%96%87%E4%BB%B6%E7%89%88.html?t=' + Date.now();
+      }
+
+      document.getElementById('screenshotBtn').addEventListener('click', function () {
+        closeResult();
+
+        var stats = getReportStats();
+        if (isMockExam()) {
+          fillMockReport(stats);
+        } else {
+          fillLegacyReport(stats);
+        }
+        showReportOverlay();
       });
 
       document.getElementById('reportClose').addEventListener('click', function () {
-        var report = document.getElementById('reportOverlay');
-        report.classList.remove('visible');
-        setTimeout(function () { report.classList.remove('show'); showResult(); }, 300);
+        closeReportOverlay(true);
       });
 
       document.getElementById('reportClose2').addEventListener('click', function () {
-        var report = document.getElementById('reportOverlay');
-        report.classList.remove('visible');
-        setTimeout(function () { report.classList.remove('show'); showResult(); }, 300);
+        closeReportOverlay(true);
       });
 
       document.getElementById('reportReviewBtn').addEventListener('click', function () {
-        var report = document.getElementById('reportOverlay');
-        report.classList.remove('visible');
-        setTimeout(function () { report.classList.remove('show'); }, 300);
+        closeReportOverlay(false);
         enterReview();
       });
+
+      document.getElementById('mockReportExit').addEventListener('click', function () {
+        closeReportOverlay(true);
+      });
+
 
     })();
   </script>
