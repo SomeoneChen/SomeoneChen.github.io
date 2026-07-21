@@ -1119,7 +1119,9 @@
       refreshAll();
       renderManageList();
       importOverlay.classList.remove('show');
-      alert('导入成功！');
+      setTimeout(function(){
+        alert('导入成功！');
+      }, 50);
     } catch (err) {
       alert('导入失败，解析错误：' + err.message);
     }
@@ -1137,6 +1139,9 @@
     blankValues = {};
     saveBank();
     savePersistedState();
+    
+    currentId = bank.length ? bank[0].id : null;
+    
     refreshAll();
     renderManageList();
   });
