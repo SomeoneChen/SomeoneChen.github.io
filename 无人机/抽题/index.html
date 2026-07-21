@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<title>航线题库</title>
+<style>
+  :root{
+    --paper:#f5f3ee;
+    --paper-line:#e4dfd2;
+    --card:#ffffff;
+    --ink:#262420;
+    --ink-soft:#83796a;
+    --ink-faint:#b6ad9b;
+    --accent:#33495e;
+    --accent-soft:#e8edf1;
+    --accent-line:#33495e;
+    --danger:#a1402f;
+    --danger-soft:#f5e8e4;
+    --border:#e2ddd0;
+    --font-serif:Georgia,'Noto Serif SC','Songti SC',serif;
+    --font-mono:'SF Mono','JetBrains Mono',Menlo,Consolas,monospace;
+    --font-ui:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+    --r:5px;
+    --font-base:21px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  html,body{width:100%;height:100%;background:var(--paper);color:var(--ink);font-family:var(--font-ui);overflow:hidden;touch-action:manipulation;-webkit-font-smoothing:antialiased;}
+  input,textarea{-webkit-user-select:text;user-select:text;font-size:16px;}
+
+  #app{display:flex;flex-direction:column;width:100%;height:100%;padding:14px 16px 10px;gap:10px;}
+  @supports (padding:max(0px)){
+    #app{
+      padding-left:max(16px, env(safe-area-inset-left));
+      padding-right:max(16px, env(safe-area-inset-right));
+      padding-top:max(12px, env(safe-area-inset-top));
+      padding-bottom:max(10px, env(safe-area-inset-bottom));
+    }
+  }
+
+】  /* ---------- topbar ---------- */
+  .topbar{display:none!important;} /* 完全隐藏顶栏 */
+  .brand{display:flex;align-items:baseline;gap:8px;}
+  .brand .name{font-family:var(--font-serif);font-size:17px;font-weight:700;letter-spacing:.5px;color:var(--ink);}
+  .brand .count{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);}
+  .top-tools{display:flex;align-items:center;gap:10px;}
+  .font-ctl{display:flex;align-items:center;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2px;}
+  .font-ctl button{width:26px;height:26px;border:none;background:transparent;border-radius:50%;font-family:var(--font-ui);font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;}
+  .font-ctl button:active{background:var(--accent-soft);color:var(--accent);}
+  .font-ctl .val{font-family:var(--font-mono);font-size:11px;color:var(--accent);min-width:20px;text-align:center;}
+  .icon-btn{width:30px;height:30px;border:1px solid var(--border);background:var(--card);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);touch-action:manipulation;}
+  .icon-btn:active{background:var(--accent-soft);color:var(--accent);}
+  .icon-btn svg{width:15px;height:15px;}
+
+  /* ---------- main card (toolbar merged in) ---------- */
+  .card{
+    flex:1;min-height:0;background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+    display:flex;flex-direction:column;overflow:hidden;position:relative;
+  }
+  
+  /* 隐藏多余的卡片顶栏 */
+  .card-top {
+    display: none !important;
+  }
+
+  .card-body{
+    flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    display:flex;align-items:center;justify-content:center;padding:22px 20px;
+    position:relative;
+    background-image:repeating-linear-gradient(to bottom, transparent, transparent 37px, var(--paper-line) 38px);
+    background-position:0 4px;
+  }
+  .question-text{
+    font-family:var(--font-serif);line-height:1.9;font-weight:400;color:var(--ink);
+    text-align:center;width:100%;max-width:640px;letter-spacing:.2px;
+    font-size:var(--font-base);word-break:break-word;
+  }
+  .blank{
+    display:inline-block;min-width:2.2em;padding:0 5px;margin:0 2px;
+    border-bottom:2px solid var(--ink-faint);color:var(--ink-faint);
+    font-family:var(--font-mono);font-size:.88em;cursor:pointer;transition:.15s ease;
+    text-align:center;line-height:1.5;
+  }
+  .blank.filled{border-bottom-color:var(--accent);color:var(--accent);font-weight:700;}
+  .blank:active{opacity:.55;}
+  .blank.empty::before{content:'\2013\2013';letter-spacing:1px;}
+
+  .card-empty{font-family:var(--font-serif);font-size:16px;color:var(--ink-faint);text-align:center;}
+
+  .card-bottom{
+    flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:10px 14px;border-top:1px solid var(--paper-line);
+    flex-wrap: wrap; /* 允许在窄屏下换行 */
+  }
+  .controls-left, .controls-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .controls-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto; /* 居中 */
+  }
+  .bar-btn{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    border:1px solid var(--border);background:var(--paper);border-radius:20px;
+    height:38px;padding:0 14px;cursor:pointer;touch-action:manipulation;color:var(--ink-soft);
+    font-family:var(--font-ui);font-size:13px;font-weight:600;
+  }
+  .bar-btn:active{background:var(--accent-soft);color:var(--accent);}
+  .bar-btn svg{width:15px;height:15px;}
+  .bar-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;padding:0 18px;}
+  .bar-btn.primary:active{background:#25384a;}
+  .icon-only{width:38px;padding:0;}
+
+  .timer-inline{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .timer-inline .t{font-family:var(--font-mono);font-size:22px;font-weight:700;color:var(--ink);letter-spacing:1px;font-variant-numeric:tabular-nums;min-width:64px;text-align:center;}
+  .timer-inline .t.warn{color:#b06a1c;}
+  .timer-inline .t.danger{color:var(--danger);}
+  .timer-inline .icon-btn{width:32px;height:32px;}
+  .timer-inline .icon-btn svg{width:13px;height:13px;}
+  .timer-inline .icon-btn.play{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  /* ---------- bottom strip ---------- */
+  .strip{
+    flex-shrink:0;height:38px;display:flex;align-items:center;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .strip::-webkit-scrollbar{display:none;}
+  .dot{
+    flex-shrink:0;min-width:28px;height:28px;padding:0 4px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--ink-soft);background:var(--card);
+    border:1px solid var(--border);cursor:pointer;touch-action:manipulation;position:relative;
+  }
+  .dot.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .dot.has-blanks::after{content:'';position:absolute;top:-1px;right:-1px;width:5px;height:5px;border-radius:50%;background:var(--ink-faint);}
+  .dot.active.has-blanks::after{background:#fff;}
+
+  /* ---------- overlays shared ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(38,36,32,.32);z-index:9990;display:none;align-items:center;justify-content:center;padding:20px;
+    animation:fade .15s ease;
+  }
+  .overlay.show{display:flex;}
+  
+  /* 编辑题目弹窗 z-index 应该在题库管理弹窗之上 */
+  #editOverlay {
+    z-index: 9995;
+  }
+  /* 导入题目弹窗 z-index 也应该在题库管理弹窗之上 */
+  #importOverlay {
+    z-index: 9995;
+  }
+  /* 键盘弹窗 z-index 也在最上层 */
+  #keypadOverlay {
+    z-index: 9996;
+  }
+  /* 时间到弹窗也在最上层 */
+  #alarmOverlay {
+    z-index: 9998;
+  }
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ---------- keypad sheet (elegant, no IME) ---------- */
+  .keypad-sheet{
+    background:var(--card);border-radius:var(--r);width:100%;max-width:340px;
+    border:1px solid var(--border);animation:rise .18s ease;overflow:hidden;
+  }
+  .keypad-head{padding:16px 18px 8px;text-align:center;}
+  .keypad-head .lbl{font-family:var(--font-ui);font-size:12px;color:var(--ink-soft);letter-spacing:.5px;}
+  .keypad-head .disp{font-family:var(--font-mono);font-size:30px;font-weight:700;color:var(--ink);min-height:40px;letter-spacing:1px;}
+  .keypad-head .disp.empty{color:var(--ink-faint);}
+  .keypad-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--paper-line);}
+  .keypad-grid button{
+    border:none;border-right:1px solid var(--paper-line);border-bottom:1px solid var(--paper-line);
+    background:var(--card);height:56px;font-family:var(--font-mono);font-size:19px;font-weight:600;color:var(--ink);
+    cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;
+  }
+  .keypad-grid button:nth-child(3n){border-right:none;}
+  .keypad-grid button:active{background:var(--accent-soft);}
+  .keypad-grid button.fn{color:var(--ink-soft);font-size:15px;}
+  .keypad-foot{display:flex;border-top:1px solid var(--paper-line);}
+  .keypad-foot button{
+    flex:1;border:none;background:var(--card);height:50px;font-family:var(--font-ui);font-size:14px;font-weight:600;
+    cursor:pointer;touch-action:manipulation;
+  }
+  .keypad-foot button.cancel{color:var(--ink-soft);border-right:1px solid var(--paper-line);}
+  .keypad-foot button.confirm{color:#fff;background:var(--accent);}
+  .keypad-foot button:active{opacity:.85;}
+
+  /* ---------- edit / manage modal ---------- */
+  .modal{
+    background:var(--card);border-radius:var(--r);width:100%;max-width:480px;max-height:82vh;
+    display:flex;flex-direction:column;border:1px solid var(--border);animation:rise .18s ease;overflow:hidden;
+  }
+  .modal-head{padding:16px 18px 10px;border-bottom:1px solid var(--paper-line);flex-shrink:0;}
+  .modal-head h3{font-family:var(--font-serif);font-size:17px;font-weight:700;color:var(--ink);}
+  .modal-head .sub{font-family:var(--font-ui);font-size:11px;color:var(--ink-soft);margin-top:3px;}
+  .modal-body{padding:14px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .field label{display:block;font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;letter-spacing:.3px;}
+  .field textarea{
+    width:100%;min-height:76px;padding:10px 12px;border:1.5px solid var(--border);border-radius:4px;
+    font-family:var(--font-serif);font-size:16px;line-height:1.6;background:var(--paper);outline:none;resize:vertical;
+  }
+  .field textarea:focus{border-color:var(--accent);background:#fff;}
+  .field-hint{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);margin-top:6px;}
+  .modal-foot{display:flex;border-top:1px solid var(--paper-line);flex-shrink:0;}
+  .modal-foot button{flex:1;border:none;background:var(--card);height:48px;font-family:var(--font-ui);font-size:14px;font-weight:600;cursor:pointer;touch-action:manipulation;}
+  .modal-foot button.cancel{color:var(--ink-soft);border-right:1px solid var(--paper-line);}
+  .modal-foot button.confirm{color:#fff;background:var(--accent);}
+  .modal-foot button:active{opacity:.85;}
+
+  /* manage list */
+  .qlist{display:flex;flex-direction:column;gap:1px;background:var(--paper-line);border:1px solid var(--paper-line);border-radius:4px;overflow:hidden;}
+  .qrow{display:flex;align-items:center;gap:8px;background:var(--card);padding:9px 10px;}
+  .qrow .n{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);min-width:20px;flex-shrink:0;}
+  .qrow .t{flex:1;font-family:var(--font-serif);font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+  .qrow .t .mk{color:var(--accent);font-weight:700;font-family:var(--font-mono);}
+  .qrow .acts{display:flex;gap:2px;flex-shrink:0;}
+  .qrow .acts button{width:28px;height:28px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;touch-action:manipulation;}
+  .qrow .acts button svg{width:14px;height:14px;}
+  .qrow .acts button:active{background:var(--accent-soft);}
+  .qrow .acts button.del:active{background:var(--danger-soft);color:var(--danger);}
+  .empty-list{padding:30px 10px;text-align:center;font-family:var(--font-serif);font-size:14px;color:var(--ink-faint);}
+
+  .manage-add{
+    display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:42px;margin-top:10px;
+    border:1.5px dashed var(--ink-faint);border-radius:4px;background:transparent;color:var(--ink-soft);
+    font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation;
+  }
+  .manage-add:active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);}
+  .manage-add svg{width:14px;height:14px;}
+
+  .util-row{display:flex;gap:14px;justify-content:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--paper-line);}
+  .util-row button{background:none;border:none;font-family:var(--font-ui);font-size:12px;color:var(--ink-faint);cursor:pointer;touch-action:manipulation;}
+  .util-row button:active{color:var(--accent);}
+  .util-row button.warn:active{color:var(--danger);}
+
+  /* 隐藏截图指示的部分内容 */
+  .brand { display: none !important; }
+  #qIndex { display: none !important; }
+
+  /* 倒计时时间显示 */
+  .timer-inline .t {
+    display: inline-block;
+    cursor: pointer;
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+  .timer-inline .t:hover {
+    color: var(--accent);
+  }
+  .timer-inline .t:active {
+    transform: scale(0.95);
+  }
+
+  /* 拖动调节文字大小 */
+  #fontSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 90px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--paper-line);
+    outline: none;
+    cursor: pointer;
+    border: none;
+    margin: 0 4px;
+    padding: 0;
+  }
+  #fontSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  #fontSlider::-webkit-slider-thumb:active {
+    transform: scale(1.3);
+  }
+  #fontSlider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+    transition: transform 0.1s ease;
+  }
+  #fontSlider::-moz-range-thumb:active {
+    transform: scale(1.3);
+  }
+
+  /* 倒计时运行期间的全局禁用 */
+  body.timer-running .strip,
+  body.timer-running #resetFieldsBtn,
+  body.timer-running #editCurrentBtn,
+  body.timer-running #manageBankBtn,
+  body.timer-running .font-ctl,
+  body.timer-running #orientationBtn,
+  body.timer-running #randomBtn {
+    pointer-events: none;
+    opacity: 0.45;
+  }
+  
+  /* 倒计时期间题目内容不可编辑/填空，但不置灰变暗 */
+  body.timer-running .question-text .blank {
+    pointer-events: none;
+  }
+
+  /* 动效支持 */
+  .bar-btn, .icon-btn, .keypad-grid button, .keypad-foot button, .modal-foot button, .manage-add, .dot {
+    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  }
+  .bar-btn:active, .icon-btn:active, .keypad-grid button:active, .keypad-foot button:active, .modal-foot button:active, .manage-add:active, .dot:active {
+    transform: scale(0.94);
+  }
+
+  /* 弹窗回弹动画 */
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .keypad-sheet, .modal {
+    animation: rise 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* 题目文字进入动画 */
+  @keyframes textFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .text-fade-in {
+    animation: textFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* 倒计时危急状态呼吸动画 */
+  @keyframes dangerPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.75; }
+  }
+  .timer-inline .t.danger {
+    animation: dangerPulse 0.5s infinite;
+  }
+
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <main class="card">
+    <div class="card-body" id="cardBody">
+      <div class="card-empty" id="emptyState">题库为空，点击题库管理添加题目</div>
+      <div class="question-text hidden" id="questionText"></div>
+    </div>
+
+    <div class="card-bottom">
+      <div class="controls-left">
+        <button class="icon-btn" id="editCurrentBtn" title="编辑本题"></button>
+        <button class="icon-btn" id="manageBankBtn" title="题库管理"></button>
+        <button class="bar-btn icon-only" id="resetFieldsBtn" title="重置占位"></button>
+      </div>
+
+      <div class="controls-center">
+        <div class="timer-inline">
+          <button class="icon-btn" id="timerReset" title="重置计时"></button>
+          <span class="t" id="timerDisplay">01:00</span>
+          <button class="icon-btn play" id="timerToggle" title="开始/暂停"></button>
+        </div>
+      </div>
+
+      <div class="controls-right">
+        <div class="font-ctl" style="margin-right: 4px;">
+          <button id="fontMinus">A−</button>
+          <input type="range" id="fontSlider" min="15" max="72" value="21" step="1">
+          <span class="val" id="fontDisplay">21</span>
+          <button id="fontPlus">A+</button>
+        </div>
+        <button class="icon-btn" id="orientationBtn" title="切换方向"></button>
+        <button class="bar-btn primary" id="randomBtn">随机抽题</button>
+      </div>
+    </div>
+  </main>
+
+  <nav class="strip" id="questionStrip"></nav>
+</div>
+
+    <!-- 增加自定义倒计时结束弹窗结构 -->
+    <div class="overlay" id="alarmOverlay">
+      <div class="modal" style="max-width: 320px; text-align: center;">
+        <div class="modal-body" style="padding: 24px 20px;">
+          <div style="font-size: 48px; margin-bottom: 12px; animation: dangerPulse 0.8s infinite;">⏰</div>
+          <h3 style="font-family: var(--font-serif); font-size: 20px; margin-bottom: 8px; color: var(--danger);">时间到！</h3>
+          <p style="font-size: 14px; color: var(--ink-soft); line-height: 1.5;">倒计时已结束，请注意！</p>
+        </div>
+        <div class="modal-foot">
+          <button class="confirm" id="alarmCloseBtn" style="width: 100%; background: var(--danger);">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 导入题目弹窗结构 -->
+    <div class="overlay" id="importOverlay">
+      <div class="modal" style="max-width: 420px;">
+        <div class="modal-head">
+          <h3>导入题目</h3>
+          <div class="sub">请粘贴导出的 JSON 文本到下方输入框中</div>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <textarea id="importTextarea" placeholder="在此粘贴导出的题目 JSON 数据..." style="min-height: 150px; font-family: var(--font-mono); font-size: 12px;"></textarea>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button class="bar-btn" id="importClipboardBtn" style="flex: 1; height: 32px; font-size: 12px;">从剪贴板读取</button>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="cancel" id="importCancelBtn">取消</button>
+          <button class="confirm" id="importConfirmBtn">确定导入</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 占位符键盘（自定义，不唤起系统输入法） -->
+<div class="overlay" id="keypadOverlay">
+  <div class="keypad-sheet">
+    <div class="keypad-head">
+      <div class="lbl">填入数值</div>
+      <div class="disp empty" id="keypadDisplay">—</div>
+    </div>
+    <div class="keypad-grid">
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <button class="fn" data-k="sign">+/−</button><button data-k="0">0</button><button class="fn" data-k="dot">.</button>
+    </div>
+    <div class="keypad-foot">
+      <button class="cancel" id="keypadClear">清空</button>
+      <button class="cancel" id="keypadBack">退格</button>
+      <button class="confirm" id="keypadConfirm">完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑 / 新增题目 -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="editTitle">编辑题目</h3>
+      <div class="sub" id="editSub">用 x 标记可填空的位置</div>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>题目文本</label>
+        <textarea id="editText" rows="3" placeholder="例：飞往 x 的高度为 x 米"></textarea>
+        <div class="field-hint" id="editHint">识别到 0 处空格</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="cancel" id="editCancel">取消</button>
+      <button class="confirm" id="editConfirm">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 题库管理 -->
+<div class="overlay" id="manageOverlay">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-head">
+      <h3>题库管理</h3>
+      <div class="sub"><span id="manageCount">0</span> 道题目 · x 表示空格</div>
+    </div>
+    <div class="modal-body">
+      <div class="qlist" id="manageList"></div>
+      <button class="manage-add" id="addQuestionBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增题目</button>
+      <div class="util-row">
+        <button id="exportBtn">导出</button>
+        <button id="importBtn">导入</button>
+        <button id="resetDefaultBtn" class="warn">恢复默认</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="confirm" id="manageCloseBtn" style="width:100%">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- icons ---------------- */
+  const ICONS = {
+    edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+    list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>',
+    reset:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 2.8 6.5"/><polyline points="3 20 3 13 10 13"/></svg>',
+    play:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20"/></svg>',
+    pause:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>',
+    trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+    rotate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3v6h-6"/><path d="M3 21v-6h6"/><path d="M3.5 9A9 9 0 0 1 20 6.3"/><path d="M20.5 15A9 9 0 0 1 4 17.7"/></svg>',
+  };
+  document.getElementById('editCurrentBtn').innerHTML = ICONS.edit;
+  document.getElementById('manageBankBtn').innerHTML = ICONS.list;
+  document.getElementById('resetFieldsBtn').innerHTML = ICONS.reset;
+  document.getElementById('timerReset').innerHTML = ICONS.reset;
+  document.getElementById('orientationBtn').innerHTML = ICONS.rotate;
+
+  /* ---------------- default bank (bare x placeholders, no tags) ---------------- */
+  const DEFAULT_QUESTIONS = [
+    { id: 1,  text: '连接飞机起飞执行' },
+    { id: 2,  text: '改高度飞往 x' },
+    { id: 3,  text: '以当前高度飞往 x' },
+    { id: 4,  text: '飞往 x 的高度为 x 米' },
+    { id: 5,  text: '原地上升或者下降 x 米' },
+    { id: 6,  text: '修改所有航点高度为 x 米' },
+    { id: 7,  text: '航线中间增加航点' },
+    { id: 8,  text: '航线之间增加航点距离 x x 米' },
+    { id: 9,  text: '指定航点 x 指定方向 x 和距离 x 增加航点' },
+    { id: 10, text: '删除航点 x' },
+    { id: 11, text: '航点平移，移动航点 x 到 x' },
+    { id: 12, text: '以 x 米每秒的速度飞往 x' },
+    { id: 13, text: '起飞后直飞 x 号点开始执行' },
+    { id: 14, text: 'x-x 以 x 米每秒运行' },
+    { id: 15, text: '增加航点并保持图形原有形状' },
+    { id: 16, text: '航线循环 x 次' },
+    { id: 17, text: '修改全局速度飞往 x' },
+    { id: 18, text: '在 x 号点 x 方向 x 米处增加航点，序号为 x 号点，完成后执行航线（x 分钟）' },
+    { id: 19, text: '把 x 号点平移到 x 号点上' },
+  ];
+
+  // font size range configuration
+  const MIN_FONT_SIZE = 15;
+  const MAX_FONT_SIZE = 72;
+
+  /* ---------------- state ---------------- */
+  let bank = [];
+  let currentId = null;
+  let blankValues = {};      // key `${qid}#${idx}` -> string
+  let fontSize = 21;
+  let timerSeconds = 60;
+  let timerRunning = false;
+  let timerHandle = null;
+  let activeTimerEditing = false; // 是否在编辑倒计时
+
+  const BLANK_RE = /(?<![A-Za-z0-9])[xX](?![A-Za-z0-9])/g;
+
+  /* ---------------- dom ---------------- */
+  const $ = s => document.querySelector(s);
+  const questionText = $('#questionText');
+  const emptyState = $('#emptyState');
+  const cardBody = $('#cardBody');
+  const qIndex = null;
+  const questionCount = null;
+  const randomBtn = $('#randomBtn');
+  const resetFieldsBtn = $('#resetFieldsBtn');
+  const editCurrentBtn = $('#editCurrentBtn');
+  const manageBankBtn = $('#manageBankBtn');
+  const strip = $('#questionStrip');
+  const fontSlider = $('#fontSlider');
+  const fontDisplay = $('#fontDisplay');
+  const fontMinus = $('#fontMinus');
+  const fontPlus = $('#fontPlus');
+  const timerDisplay = $('#timerDisplay');
+  const timerToggle = $('#timerToggle');
+  const timerReset = $('#timerReset');
+  const orientationBtn = $('#orientationBtn');
+
+  const keypadOverlay = $('#keypadOverlay');
+  const keypadDisplay = $('#keypadDisplay');
+  const keypadClear = $('#keypadClear');
+  const keypadBack = $('#keypadBack');
+  const keypadConfirm = $('#keypadConfirm');
+
+  const editOverlay = $('#editOverlay');
+  const editTitle = $('#editTitle');
+  const editText = $('#editText');
+  const editHint = $('#editHint');
+  const editCancel = $('#editCancel');
+  const editConfirm = $('#editConfirm');
+
+  const manageOverlay = $('#manageOverlay');
+  const manageList = $('#manageList');
+  const manageCount = $('#manageCount');
+  const addQuestionBtn = $('#addQuestionBtn');
+  const exportBtn = $('#exportBtn');
+  const importBtn = $('#importBtn');
+  const resetDefaultBtn = $('#resetDefaultBtn');
+  const manageCloseBtn = $('#manageCloseBtn');
+  
+  const alarmOverlay = $('#alarmOverlay');
+  const alarmCloseBtn = $('#alarmCloseBtn');
+  
+  const importOverlay = $('#importOverlay');
+  const importTextarea = $('#importTextarea');
+  const importClipboardBtn = $('#importClipboardBtn');
+  const importCancelBtn = $('#importCancelBtn');
+  const importConfirmBtn = $('#importConfirmBtn');
+
+  /* ---------------- storage / migration ---------------- */
+  function loadBank(){
+    const v3 = localStorage.getItem('questionBank_v3');
+    if (v3){
+      try{
+        const parsed = JSON.parse(v3);
+        if (Array.isArray(parsed) && parsed.length){ bank = parsed; return; }
+      }catch(e){}
+    }
+    // migrate from older {name} format if present
+    const v2 = localStorage.getItem('questionBank_v2');
+    if (v2){
+      try{
+        const parsed = JSON.parse(v2);
+        if (Array.isArray(parsed) && parsed.length){
+          bank = parsed.map(q => ({ id:q.id, text:String(q.text||'').replace(/\{[^}]*\}/g,'x') }));
+          saveBank();
+          return;
+        }
+      }catch(e){}
+    }
+    bank = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+    saveBank();
+  }
+  function saveBank(){
+    localStorage.setItem('questionBank_v3', JSON.stringify(bank));
+  }
+  
+  // 保存与加载字号及填空数据
+  function loadPersistedState() {
+    // 载入字号
+    const savedFontSize = localStorage.getItem('fontSize_v3');
+    if (savedFontSize) {
+      fontSize = parseInt(savedFontSize, 10);
+    }
+    // 载入填空数据
+    const savedBlankValues = localStorage.getItem('blankValues_v3');
+    if (savedBlankValues) {
+      try {
+        blankValues = JSON.parse(savedBlankValues);
+      } catch (e) {
+        blankValues = {};
+      }
+    }
+  }
+  
+  function savePersistedState() {
+    localStorage.setItem('fontSize_v3', fontSize);
+    localStorage.setItem('blankValues_v3', JSON.stringify(blankValues));
+  }
+
+  function nextId(){
+    if (!bank.length) return 1;
+    const ids = bank.map(q=>q.id).sort((a,b)=>a-b);
+    let n = 1;
+    for (const id of ids){ if (id===n) n++; else break; }
+    return n;
+  }
+
+  /* ---------------- placeholder parsing ---------------- */
+  function countBlanks(text){
+    const m = text.match(BLANK_RE);
+    return m ? m.length : 0;
+  }
+  function escapeHtml(str){
+    const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+  }
+
+  /* ---------------- render question ---------------- */
+  function refreshAll(){
+    if (questionCount) {
+      questionCount.textContent = bank.length + ' 题';
+    }
+    if (currentId && !bank.some(q=>q.id===currentId)) currentId = null;
+    if (!currentId && bank.length) currentId = bank[0].id;
+    renderStrip();
+    if (currentId) renderQuestion(currentId); else showEmpty();
+  }
+
+  function showEmpty(){
+    questionText.classList.add('hidden');
+    emptyState.classList.remove('hidden');
+    if (qIndex) {
+      qIndex.textContent = '— / —';
+    }
+  }
+
+  function renderQuestion(id){
+    const idx = bank.findIndex(q=>q.id===id);
+    if (idx === -1){ showEmpty(); return; }
+    const q = bank[idx];
+    currentId = q.id;
+    emptyState.classList.add('hidden');
+    questionText.classList.remove('hidden');
+    if (qIndex) {
+      qIndex.innerHTML = '<b>' + String(idx+1).padStart(2,'0') + '</b> / ' + String(bank.length).padStart(2,'0');
+    }
+
+    let html = escapeHtml(q.text);
+    let counter = 0;
+    html = html.replace(BLANK_RE, function(){
+      const i = counter++;
+      const key = q.id + '#' + i;
+      const val = blankValues[key];
+      const filled = val !== undefined && val !== '';
+      const cls = 'blank' + (filled ? ' filled' : ' empty');
+      const shown = filled ? escapeHtml(val) : '';
+      return '<span class="'+cls+'" data-qid="'+q.id+'" data-idx="'+i+'">'+shown+'</span>';
+    });
+    questionText.innerHTML = html;
+    questionText.dataset.qid = q.id;
+    questionText.style.fontSize = fontSize + 'px';
+    
+    // 移除旧动画类并重新添加，触发淡入动效
+    questionText.classList.remove('text-fade-in');
+    void questionText.offsetWidth; // 触发回流
+    questionText.classList.add('text-fade-in');
+    
+    updateStripActive(q.id);
+  }
+
+  /* ---------------- blank tap -> keypad ---------------- */
+  let activeBlankKey = null;
+  let keypadBuffer = '';
+
+  cardBody.addEventListener('click', function(e){
+    // 倒计时运行期间禁止填空
+    if (timerRunning) return;
+    const b = e.target.closest('.blank');
+    if (!b) return;
+    activeBlankKey = b.dataset.qid + '#' + b.dataset.idx;
+    keypadBuffer = blankValues[activeBlankKey] || '';
+    activeTimerEditing = false;
+    $('#keypadOverlay .lbl').textContent = '填入数值';
+    renderKeypad();
+    keypadOverlay.classList.add('show');
+  });
+
+  // 点击时间展示编辑倒计时
+  timerDisplay.addEventListener('click', function(){
+    if (timerRunning) return;
+    activeBlankKey = null;
+    activeTimerEditing = true;
+    keypadBuffer = String(timerSeconds);
+    $('#keypadOverlay .lbl').textContent = '设置倒计时秒数';
+    renderKeypad();
+    keypadOverlay.classList.add('show');
+  });
+
+  function renderKeypad(){
+    if (keypadBuffer === ''){
+      keypadDisplay.textContent = '—';
+      keypadDisplay.classList.add('empty');
+    } else {
+      keypadDisplay.textContent = keypadBuffer;
+      keypadDisplay.classList.remove('empty');
+    }
+  }
+
+  document.querySelectorAll('.keypad-grid button').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const k = this.dataset.k;
+      if (k === 'sign'){
+        if (keypadBuffer.startsWith('-')) keypadBuffer = keypadBuffer.slice(1);
+        else keypadBuffer = '-' + keypadBuffer;
+      } else if (k === 'dot'){
+        if (!keypadBuffer.includes('.')) keypadBuffer += (keypadBuffer===''?'0.':'.');
+      } else {
+        keypadBuffer += k;
+      }
+      renderKeypad();
+    });
+  });
+  keypadBack.addEventListener('click', function(){
+    keypadBuffer = keypadBuffer.slice(0, -1);
+    renderKeypad();
+  });
+  keypadClear.addEventListener('click', function(){
+    keypadBuffer = '';
+    renderKeypad();
+  });
+  keypadConfirm.addEventListener('click', function(){
+    if (activeBlankKey){
+      blankValues[activeBlankKey] = keypadBuffer;
+      savePersistedState(); // 保存填空数据
+      closeKeypad();
+      if (currentId) renderQuestion(currentId);
+    } else if (activeTimerEditing) {
+      const val = parseInt(keypadBuffer, 10);
+      if (!isNaN(val) && val > 0) {
+        timerSeconds = val;
+        paintTimer();
+      }
+      closeKeypad();
+    }
+  });
+  keypadOverlay.addEventListener('click', function(e){
+    if (e.target === keypadOverlay) closeKeypad();
+  });
+  function closeKeypad(){
+    keypadOverlay.classList.remove('show');
+    activeBlankKey = null;
+    activeTimerEditing = false;
+  }
+
+  /* ---------------- long-press to edit ---------------- */
+  let pressTimer = null, pressStart = null, pressFired = false;
+  cardBody.addEventListener('pointerdown', function(e){
+    if (e.target.closest('.blank')) return;
+    const el = e.target.closest('.question-text');
+    if (!el) return;
+    pressFired = false;
+    pressStart = { x:e.clientX, y:e.clientY };
+    pressTimer = setTimeout(function(){
+      pressFired = true;
+      const qid = parseInt(el.dataset.qid, 10);
+      if (!isNaN(qid)) openEditor(qid);
+    }, 550);
+  });
+  function cancelPress(){ if (pressTimer){ clearTimeout(pressTimer); pressTimer = null; } }
+  cardBody.addEventListener('pointerup', cancelPress);
+  cardBody.addEventListener('pointerleave', cancelPress);
+  cardBody.addEventListener('pointercancel', cancelPress);
+  cardBody.addEventListener('pointermove', function(e){
+    if (!pressTimer || pressFired || !pressStart) return;
+    const dx = Math.abs(e.clientX - pressStart.x), dy = Math.abs(e.clientY - pressStart.y);
+    if (dx > 10 || dy > 10) cancelPress();
+  });
+  cardBody.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+
+  /* ---------------- edit / add question modal ---------------- */
+  let editSaveHandler = null;
+  let editOnSaved = null;
+
+  function openEditor(qid, onSaved){
+    editOnSaved = onSaved || null;
+    const isEdit = qid !== null && qid !== undefined;
+    const q = isEdit ? bank.find(x=>x.id===qid) : null;
+    if (isEdit && !q) return;
+
+    editTitle.textContent = isEdit ? '编辑题目' : '新增题目';
+    editText.value = isEdit ? q.text : '';
+    updateEditHint();
+    editOverlay.classList.add('show');
+
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        editText.focus();
+        const len = editText.value.length;
+        editText.setSelectionRange(len, len);
+      });
+    });
+
+    editSaveHandler = function(){
+      const text = editText.value.trim();
+      if (!text){ editText.focus(); return; }
+      if (isEdit){
+        q.text = text;
+        saveBank();
+        renderQuestion(q.id);
+      } else {
+        const id = nextId();
+        bank.push({ id, text });
+        saveBank();
+        currentId = id;
+        renderStrip();
+        renderQuestion(id);
+      }
+      closeEditor();
+      if (editOnSaved) editOnSaved();
+    };
+  }
+  function closeEditor(){
+    editOverlay.classList.remove('show');
+    editSaveHandler = null;
+  }
+  function updateEditHint(){
+    editHint.textContent = '识别到 ' + countBlanks(editText.value) + ' 处空格';
+  }
+  editText.addEventListener('input', updateEditHint);
+  editConfirm.addEventListener('click', function(){ if (editSaveHandler) editSaveHandler(); });
+  editCancel.addEventListener('click', closeEditor);
+  editOverlay.addEventListener('click', function(e){ if (e.target===editOverlay) closeEditor(); });
+  editText.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); if (editSaveHandler) editSaveHandler(); }
+    if (e.key === 'Escape') closeEditor();
+  });
+
+  editCurrentBtn.addEventListener('click', function(){
+    if (currentId) openEditor(currentId);
+  });
+
+  /* ---------------- manage bank modal ---------------- */
+  function renderManageList(){
+    manageList.innerHTML = '';
+    if (!bank.length){
+      manageList.innerHTML = '<div class="empty-list">暂无题目</div>';
+      manageCount.textContent = '0';
+      return;
+    }
+    manageCount.textContent = bank.length;
+    bank.forEach(function(q, i){
+      let html = escapeHtml(q.text).replace(BLANK_RE, '<span class="mk">x</span>');
+      const row = document.createElement('div');
+      row.className = 'qrow';
+      row.innerHTML =
+        '<span class="n">'+String(i+1).padStart(2,'0')+'</span>'+
+        '<span class="t">'+html+'</span>'+
+        '<div class="acts">'+
+          '<button class="edit" data-id="'+q.id+'">'+ICONS.edit+'</button>'+
+          '<button class="del" data-id="'+q.id+'">'+ICONS.trash+'</button>'+
+        '</div>';
+      manageList.appendChild(row);
+    });
+    manageList.querySelectorAll('.edit').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        openEditor(parseInt(this.dataset.id,10), renderManageList);
+      });
+    });
+    manageList.querySelectorAll('.del').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        deleteQuestion(parseInt(this.dataset.id,10));
+      });
+    });
+  }
+
+  function deleteQuestion(id){
+    if (!confirm('删除该题目？')) return;
+    bank = bank.filter(q=>q.id!==id);
+    Object.keys(blankValues).forEach(function(k){
+      if (k.startsWith(id+'#')) delete blankValues[k];
+    });
+    saveBank();
+    if (currentId === id) currentId = bank.length ? bank[0].id : null;
+    refreshAll();
+    renderManageList();
+  }
+
+  function openManage(){ renderManageList(); manageOverlay.classList.add('show'); }
+  manageBankBtn.addEventListener('click', openManage);
+  manageCloseBtn.addEventListener('click', function(){ manageOverlay.classList.remove('show'); });
+  manageOverlay.addEventListener('click', function(e){ if (e.target===manageOverlay) manageOverlay.classList.remove('show'); });
+  addQuestionBtn.addEventListener('click', function(){ openEditor(null, renderManageList); });
+
+  /* ---------------- import / export ---------------- */
+  exportBtn.addEventListener('click', function(){
+    const json = JSON.stringify(bank, null, 2);
+    navigator.clipboard.writeText(json).then(function(){
+      alert('题库已成功复制到剪贴板！');
+    }).catch(function(){
+      // 回退方案：如果不支持写入剪贴板或拒绝权限，使用 prompt 让用户手动复制
+      const tempTextarea = document.createElement('textarea');
+      tempTextarea.value = json;
+      document.body.appendChild(tempTextarea);
+      tempTextarea.select();
+      try {
+        document.execCommand('copy');
+        alert('题库已复制到剪贴板（回退方案）');
+      } catch (err) {
+        alert('复制失败，请手动选择复制。');
+      }
+      document.body.removeChild(tempTextarea);
+    });
+  });
+  
+  importBtn.addEventListener('click', function(){
+    importTextarea.value = '';
+    importOverlay.classList.add('show');
+    setTimeout(() => importTextarea.focus(), 200);
+  });
+  
+  importClipboardBtn.addEventListener('click', function(){
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      alert('当前浏览器环境不支持直接读取剪贴板，请手动粘贴（Ctrl+V）至文本框中。');
+      return;
+    }
+    navigator.clipboard.readText().then(function(text){
+      if (text) {
+        importTextarea.value = text;
+      } else {
+        alert('剪贴板为空或未获取到文本内容。');
+      }
+    }).catch(function(err){
+      console.error(err);
+      alert('读取剪贴板失败，这可能是因为您拒绝了浏览器的剪贴板访问权限，或者是浏览器安全策略限制（非 HTTPS 环境下常被禁用）。请手动粘贴（Ctrl+V）至下方文本框中。');
+    });
+  });
+  
+  importCancelBtn.addEventListener('click', function(){
+    importOverlay.classList.remove('show');
+  });
+  
+  importConfirmBtn.addEventListener('click', function(){
+    const content = importTextarea.value.trim();
+    if (!content) {
+      alert('请输入导入内容！');
+      return;
+    }
+    try {
+      const data = JSON.parse(content);
+      if (!Array.isArray(data) || !data.length) throw new Error('数据格式不正确，应该是个非空的 JSON 数组');
+      
+      // 检查并自动适配每项数据结构，如果没有 id 则自动生成 id，保证有 text
+      const parsedData = data.map((q, idx) => {
+        if (!q.text) throw new Error(`第 ${idx + 1} 项数据缺少 text 内容`);
+        return {
+          id: parseInt(q.id, 10) || (idx + 1),
+          text: String(q.text)
+        };
+      });
+      
+      // 检查 id 是否冲突并去重/重新编号排序，防止渲染或事件错误
+      const finalData = [];
+      const idMap = new Set();
+      parsedData.forEach(q => {
+        let targetId = q.id;
+        while (idMap.has(targetId) || targetId <= 0) {
+          targetId++;
+        }
+        idMap.add(targetId);
+        finalData.push({ id: targetId, text: q.text });
+      });
+      
+      if (!confirm('将导入 '+finalData.length+' 道题目并覆盖当前题库，确定？')) return;
+      bank = finalData;
+      blankValues = {};
+      saveBank();
+      savePersistedState();
+      
+      // 重新设置当前题目 id
+      currentId = bank.length ? bank[0].id : null;
+      
+      refreshAll();
+      renderManageList();
+      importOverlay.classList.remove('show');
+      alert('导入成功！');
+    } catch (err) {
+      alert('导入失败，解析错误：' + err.message);
+    }
+  });
+  
+  importOverlay.addEventListener('click', function(e) {
+    if (e.target === importOverlay) {
+      importOverlay.classList.remove('show');
+    }
+  });
+  
+  resetDefaultBtn.addEventListener('click', function(){
+    if (!confirm('将恢复默认题库，当前修改会丢失，确定？')) return;
+    bank = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+    blankValues = {};
+    saveBank();
+    savePersistedState();
+    refreshAll();
+    renderManageList();
+  });
+
+  /* ---------------- bottom strip ---------------- */
+  function renderStrip(){
+    strip.innerHTML = '';
+    bank.forEach(function(q){
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (countBlanks(q.text) > 0 ? ' has-blanks' : '');
+      dot.textContent = q.id;
+      dot.dataset.qid = q.id;
+      if (q.id === currentId) dot.classList.add('active');
+      dot.addEventListener('click', function(){ renderQuestion(q.id); });
+      strip.appendChild(dot);
+    });
+  }
+  function updateStripActive(qid){
+    strip.querySelectorAll('.dot').forEach(function(d){
+      d.classList.toggle('active', parseInt(d.dataset.qid,10) === qid);
+    });
+    const active = strip.querySelector('.dot.active');
+    if (active) active.scrollIntoView({ block:'nearest', inline:'center', behavior:'smooth' });
+  }
+
+  /* ---------------- font size ---------------- */
+  function setFont(size){
+    fontSize = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, size));
+    fontDisplay.textContent = Math.round(fontSize);
+    if (fontSlider) fontSlider.value = Math.round(fontSize);
+    questionText.style.fontSize = fontSize + 'px';
+    savePersistedState(); // 保存字号变化
+  }
+  fontMinus.addEventListener('click', function(){ setFont(fontSize - 1); });
+  fontPlus.addEventListener('click', function(){ setFont(fontSize + 1); });
+  if (fontSlider) {
+    fontSlider.addEventListener('input', function(){
+      setFont(parseInt(this.value, 10));
+    });
+  }
+
+  /* ---------------- timer ---------------- */
+  // Web Audio Context 用于生成蜂鸣器提示音
+  let audioCtx = null;
+  function playAlarmSound() {
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      // 播放一个三声递增的蜂鸣提醒音
+      const times = [0, 0.25, 0.5];
+      times.forEach((delay) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime + delay); // A5 音高
+        
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.2);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.2);
+      });
+    } catch (e) {
+      console.error('播放音频失败:', e);
+    }
+  }
+
+  function fmt(sec){
+    const m = Math.floor(sec/60), s = sec%60;
+    return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  }
+  function paintTimer(){
+    timerDisplay.textContent = fmt(Math.max(timerSeconds,0));
+    timerDisplay.classList.remove('warn','danger');
+    if (timerRunning){
+      if (timerSeconds <= 5) timerDisplay.classList.add('danger');
+      else if (timerSeconds <= 15) timerDisplay.classList.add('warn');
+    }
+    timerToggle.innerHTML = timerRunning ? ICONS.pause : ICONS.play;
+    
+    // 动态添加/移除全局计时运行 class 来禁用其他操作
+    if (timerRunning) {
+      document.body.classList.add('timer-running');
+    } else {
+      document.body.classList.remove('timer-running');
+    }
+  }
+  function tick(){
+    timerSeconds--;
+    if (timerSeconds <= 0){
+      timerSeconds = 0; paintTimer(); stopTimer();
+      if (navigator.vibrate) navigator.vibrate([200,100,200]);
+      
+      // 播放提示音
+      playAlarmSound();
+      
+      // 显示自定义弹窗而非原生 alert
+      alarmOverlay.classList.add('show');
+      return;
+    }
+    paintTimer();
+  }
+  function startTimer(){
+    if (timerRunning) return;
+    if (timerSeconds <= 0) timerSeconds = 60;
+    // 初始化 AudioContext 避免浏览器安全策略限制无法播放
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    } catch(e) {}
+    timerRunning = true;
+    timerHandle = setInterval(tick, 1000);
+    paintTimer();
+  }
+  function stopTimer(){
+    if (timerHandle){ clearInterval(timerHandle); timerHandle = null; }
+    timerRunning = false;
+    paintTimer();
+  }
+  timerToggle.addEventListener('click', function(){ timerRunning ? stopTimer() : startTimer(); });
+  timerReset.addEventListener('click', function(){ stopTimer(); timerSeconds = 60; paintTimer(); });
+  alarmCloseBtn.addEventListener('click', function(){ alarmOverlay.classList.remove('show'); });
+
+  /* ---------------- orientation ---------------- */
+  let landscapeLocked = false;
+  orientationBtn.addEventListener('click', function(){
+    if (!screen.orientation || !screen.orientation.lock){
+      alert('当前浏览器不支持方向锁定，请手动旋转设备');
+      return;
+    }
+    const target = landscapeLocked ? 'portrait' : 'landscape';
+    screen.orientation.lock(target).then(function(){
+      landscapeLocked = !landscapeLocked;
+    }).catch(function(){ /* silently ignore unsupported lock */ });
+  });
+
+  /* ---------------- main actions ---------------- */
+  randomBtn.addEventListener('click', function(){
+    if (!bank.length) return;
+    const pick = bank[Math.floor(Math.random()*bank.length)];
+    renderQuestion(pick.id);
+  });
+  resetFieldsBtn.addEventListener('click', function(){
+    if (!currentId) return;
+    Object.keys(blankValues).forEach(function(k){
+      if (k.startsWith(currentId+'#')) delete blankValues[k];
+    });
+    savePersistedState(); // 保存重置状态
+    renderQuestion(currentId);
+  });
+
+  /* ---------------- keyboard shortcuts (desktop) ---------------- */
+  document.addEventListener('keydown', function(e){
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.code === 'Space'){ e.preventDefault(); randomBtn.click(); }
+    if (e.key === 'r' || e.key === 'R') resetFieldsBtn.click();
+    if (e.key === 'm' || e.key === 'M') openManage();
+  });
+
+  /* ---------------- init ---------------- */
+  loadBank();
+  loadPersistedState(); // 初始化载入字号和填空数据
+  setFont(fontSize);
+  paintTimer();
+  refreshAll();
+})();
+</script>
+</body>
+</html>
