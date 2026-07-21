@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>&#26080;&#20154;&#26426;&#39064;&#24211;&#26597;&#35810;&#22120;</title>
+  <link rel="stylesheet" href="./styles.css?v=20260720-6">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="search-pane">
+      <div class="search-box">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.3-4.3m1.3-5.2a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/></svg>
+        <input id="query" type="text" autocomplete="off" placeholder="&#36755;&#20837;&#39064;&#24178;&#12289;&#36873;&#39033;&#12289;&#31572;&#26696;&#20851;&#38190;&#35789;..." autofocus>
+        <button id="clearBtn" class="icon-btn" title="&#28165;&#31354;&#25628;&#32034;" aria-label="&#28165;&#31354;&#25628;&#32034;">&times;</button>
+      </div>
+
+      <div class="filters hidden" id="bankFilters"></div>
+
+      <div class="result-meta">
+        <span id="resultCount">&#35831;&#36755;&#20837;&#20851;&#38190;&#35789;&#24320;&#22987;&#26597;&#35810;</span>
+      </div>
+
+      <div class="result-list" id="resultList" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop hidden" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <article class="question-detail">
+      <div class="detail-head">
+        <h2 id="detailTitle"></h2>
+        <button id="closeModalBtn" class="close-btn" type="button" aria-label="&#20851;&#38381;">&times;</button>
+      </div>
+      <ol class="options" id="detailOptions"></ol>
+      <div class="answer-card">
+        <span>&#31572;&#26696;</span>
+        <strong id="detailAnswer"></strong>
+      </div>
+      <section class="explain" id="explainBlock">
+        <h3>&#35299;&#26512;</h3>
+        <p id="detailExplain"></p>
+      </section>
+      <div class="modal-actions">
+        <button id="copyBtn" class="copy-btn" type="button">&#22797;&#21046;&#39064;&#30446;&#20449;&#24687;</button>
+      </div>
+    </article>
+  </div>
+
+  <div class="toast" id="toast">&#24050;&#22797;&#21046;</div>
+  <script src="./data.js?v=20260720-6"></script>
+  <script src="./app.js?v=20260720-6"></script>
+</body>
+</html>
