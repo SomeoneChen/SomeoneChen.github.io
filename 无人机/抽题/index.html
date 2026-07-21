@@ -1305,28 +1305,34 @@
   let landscapeLocked = false;
   orientationBtn.addEventListener('click', function(){
     landscapeLocked = !landscapeLocked;
-    // 优先尝试锁定屏幕方向 API
+    
+    // 不管原生API支不支持，先统一处理 CSS 降级类的开关
+    // 这样如果原生成功，我们就用原生；如果原生失败，至少CSS旋转状态是对的。
+    // 但是，如果原生成功了，我们不应该加 CSS 旋转！
+    
     if (screen.orientation && screen.orientation.lock) {
-      const target = landscapeLocked ? 'landscape' : 'portrait';
-      screen.orientation.lock(target).then(function(){
-        // 锁定成功
-      }).catch(function(){
-        // 锁定失败或用户代理拒绝，回退到 CSS 物理旋转
-        toggleCssRotate();
-      });
+      if (landscapeLocked) {
+        screen.orientation.lock('landscape').then(function(){
+          // 原生锁定成功，确保移除 CSS 旋转
+          document.body.classList.remove('force-landscape');
+        }).catch(function(){
+          // 失败时使用 CSS 旋转
+          document.body.classList.add('force-landscape');
+        });
+      } else {
+        screen.orientation.unlock();
+        // 取消时，总是移除 CSS 旋转
+        document.body.classList.remove('force-landscape');
+      }
     } else {
-      // 浏览器不支持 lock API (如桌面端或 iOS)，使用 CSS 旋转回退方案
-      toggleCssRotate();
+      // 浏览器完全不支持 API
+      if (landscapeLocked) {
+        document.body.classList.add('force-landscape');
+      } else {
+        document.body.classList.remove('force-landscape');
+      }
     }
   });
-
-  function toggleCssRotate() {
-    if (landscapeLocked) {
-      document.body.classList.add('force-landscape');
-    } else {
-      document.body.classList.remove('force-landscape');
-    }
-  }
 
   /* ---------------- main actions ---------------- */
   randomBtn.addEventListener('click', function(){
