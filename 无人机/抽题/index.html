@@ -72,7 +72,7 @@
   }
   .question-text{
     font-family:var(--font-serif);line-height:1.9;font-weight:400;color:var(--ink);
-    text-align:center;width:100%;max-width:640px;letter-spacing:.2px;
+    text-align:center;width:100%;max-width:96%;letter-spacing:.2px;
     font-size:var(--font-base);word-break:break-word;
   }
   .blank{
@@ -140,7 +140,7 @@
 
   /* ---------- overlays shared ---------- */
   .overlay{
-    position:fixed;inset:0;background:rgba(38,36,32,.32);z-index:9990;display:none;align-items:center;justify-content:center;padding:20px;
+    position:absolute;inset:0;background:rgba(38,36,32,.32);z-index:9990;display:none;align-items:center;justify-content:center;padding:20px;
     animation:fade .15s ease;
   }
   .overlay.show{display:flex;}
@@ -173,18 +173,22 @@
   .keypad-head .lbl{font-family:var(--font-ui);font-size:12px;color:var(--ink-soft);letter-spacing:.5px;}
   .keypad-head .disp{font-family:var(--font-mono);font-size:30px;font-weight:700;color:var(--ink);min-height:40px;letter-spacing:1px;}
   .keypad-head .disp.empty{color:var(--ink-faint);}
-  .keypad-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--paper-line);}
+  .keypad-grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--paper-line);}
+  .keypad-grid.timer-mode {grid-template-columns:repeat(3,1fr);}
   .keypad-grid button{
     border:none;border-right:1px solid var(--paper-line);border-bottom:1px solid var(--paper-line);
-    background:var(--card);height:56px;font-family:var(--font-mono);font-size:19px;font-weight:600;color:var(--ink);
+    background:var(--card);height:48px;font-family:var(--font-mono);font-size:18px;font-weight:600;color:var(--ink);
     cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;
   }
-  .keypad-grid button:nth-child(3n){border-right:none;}
+  .keypad-grid button:nth-child(4n){border-right:none;}
+  .keypad-grid.timer-mode button:nth-child(4n){border-right:1px solid var(--paper-line);}
+  .keypad-grid.timer-mode button:nth-child(3n){border-right:none;}
   .keypad-grid button:active{background:var(--accent-soft);}
-  .keypad-grid button.fn{color:var(--ink-soft);font-size:15px;}
+  .keypad-grid button.fn{color:var(--accent);font-size:15px;background:var(--accent-soft);}
+  .keypad-grid button.fn:active{opacity:0.8;}
   .keypad-foot{display:flex;border-top:1px solid var(--paper-line);}
   .keypad-foot button{
-    flex:1;border:none;background:var(--card);height:50px;font-family:var(--font-ui);font-size:14px;font-weight:600;
+    flex:1;border:none;background:var(--card);height:46px;font-family:var(--font-ui);font-size:14px;font-weight:600;
     cursor:pointer;touch-action:manipulation;
   }
   .keypad-foot button.cancel{color:var(--ink-soft);border-right:1px solid var(--paper-line);}
@@ -348,8 +352,39 @@
     animation: dangerPulse 0.5s infinite;
   }
 
+  /* 旋转屏幕时的指示图标 */
+  #orientationBtn::after {
+    content: "旋转";
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--ink-soft);
+    position: absolute;
+    bottom: -18px;
+    white-space: nowrap;
+  }
+  .controls-right {
+    position: relative;
+    padding-bottom: 5px;
+  }
+  #orientationBtn {
+    position: relative;
+  }
+  /* CSS 物理旋转回退样式 */
+  body.force-landscape {
+    overflow: hidden;
+  }
+  body.force-landscape #app {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 100vh;
+    height: 100vw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center center;
+  }
+
   .hidden{display:none!important;}
-</style>
+ </style>
 </head>
 <body>
 <div id="app">
@@ -364,7 +399,7 @@
       <div class="controls-left">
         <button class="icon-btn" id="editCurrentBtn" title="编辑本题"></button>
         <button class="icon-btn" id="manageBankBtn" title="题库管理"></button>
-        <button class="bar-btn icon-only" id="resetFieldsBtn" title="重置占位"></button>
+        <button class="bar-btn icon-only" id="resetFieldsBtn" title="清空本题已填数据"></button>
       </div>
 
       <div class="controls-center">
@@ -389,106 +424,108 @@
   </main>
 
   <nav class="strip" id="questionStrip"></nav>
-</div>
 
-    <!-- 增加自定义倒计时结束弹窗结构 -->
-    <div class="overlay" id="alarmOverlay">
-      <div class="modal" style="max-width: 320px; text-align: center;">
-        <div class="modal-body" style="padding: 24px 20px;">
-          <div style="font-size: 48px; margin-bottom: 12px; animation: dangerPulse 0.8s infinite;">⏰</div>
-          <h3 style="font-family: var(--font-serif); font-size: 20px; margin-bottom: 8px; color: var(--danger);">时间到！</h3>
-          <p style="font-size: 14px; color: var(--ink-soft); line-height: 1.5;">倒计时已结束，请注意！</p>
-        </div>
-        <div class="modal-foot">
-          <button class="confirm" id="alarmCloseBtn" style="width: 100%; background: var(--danger);">确定</button>
-        </div>
+  <!-- 增加自定义倒计时结束弹窗结构 -->
+  <div class="overlay" id="alarmOverlay">
+    <div class="modal" style="max-width: 320px; text-align: center;">
+      <div class="modal-body" style="padding: 24px 20px;">
+        <div style="font-size: 48px; margin-bottom: 12px; animation: dangerPulse 0.8s infinite;">⏰</div>
+        <h3 style="font-family: var(--font-serif); font-size: 20px; margin-bottom: 8px; color: var(--danger);">时间到！</h3>
+        <p style="font-size: 14px; color: var(--ink-soft); line-height: 1.5;">倒计时已结束，请注意！</p>
       </div>
-    </div>
-
-    <!-- 导入题目弹窗结构 -->
-    <div class="overlay" id="importOverlay">
-      <div class="modal" style="max-width: 420px;">
-        <div class="modal-head">
-          <h3>导入题目</h3>
-          <div class="sub">请粘贴导出的 JSON 文本到下方输入框中</div>
-        </div>
-        <div class="modal-body">
-          <div class="field">
-            <textarea id="importTextarea" placeholder="在此粘贴导出的题目 JSON 数据..." style="min-height: 150px; font-family: var(--font-mono); font-size: 12px;"></textarea>
-          </div>
-          <div style="display: flex; gap: 8px; margin-top: 10px;">
-            <button class="bar-btn" id="importClipboardBtn" style="flex: 1; height: 32px; font-size: 12px;">从剪贴板读取</button>
-          </div>
-        </div>
-        <div class="modal-foot">
-          <button class="cancel" id="importCancelBtn">取消</button>
-          <button class="confirm" id="importConfirmBtn">确定导入</button>
-        </div>
+      <div class="modal-foot">
+        <button class="confirm" id="alarmCloseBtn" style="width: 100%; background: var(--danger);">确定</button>
       </div>
-    </div>
-
-    <!-- 占位符键盘（自定义，不唤起系统输入法） -->
-<div class="overlay" id="keypadOverlay">
-  <div class="keypad-sheet">
-    <div class="keypad-head">
-      <div class="lbl">填入数值</div>
-      <div class="disp empty" id="keypadDisplay">—</div>
-    </div>
-    <div class="keypad-grid">
-      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
-      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
-      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
-      <button class="fn" data-k="sign">+/−</button><button data-k="0">0</button><button class="fn" data-k="dot">.</button>
-    </div>
-    <div class="keypad-foot">
-      <button class="cancel" id="keypadClear">清空</button>
-      <button class="cancel" id="keypadBack">退格</button>
-      <button class="confirm" id="keypadConfirm">完成</button>
     </div>
   </div>
-</div>
 
-<!-- 编辑 / 新增题目 -->
-<div class="overlay" id="editOverlay">
-  <div class="modal">
-    <div class="modal-head">
-      <h3 id="editTitle">编辑题目</h3>
-      <div class="sub" id="editSub">用 x 标记可填空的位置</div>
-    </div>
-    <div class="modal-body">
-      <div class="field">
-        <label>题目文本</label>
-        <textarea id="editText" rows="3" placeholder="例：飞往 x 的高度为 x 米"></textarea>
-        <div class="field-hint" id="editHint">识别到 0 处空格</div>
+  <!-- 导入题目弹窗结构 -->
+  <div class="overlay" id="importOverlay">
+    <div class="modal" style="max-width: 420px;">
+      <div class="modal-head">
+        <h3>导入题目</h3>
+        <div class="sub">请粘贴导出的 JSON 文本到下方输入框中</div>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <textarea id="importTextarea" placeholder="在此粘贴导出的题目 JSON 数据..." style="min-height: 150px; font-family: var(--font-mono); font-size: 12px;"></textarea>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+          <button class="bar-btn" id="importClipboardBtn" style="flex: 1; height: 32px; font-size: 12px;">从剪贴板读取</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="cancel" id="importCancelBtn">取消</button>
+        <button class="confirm" id="importConfirmBtn">确定导入</button>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="cancel" id="editCancel">取消</button>
-      <button class="confirm" id="editConfirm">保存</button>
-    </div>
   </div>
-</div>
 
-<!-- 题库管理 -->
-<div class="overlay" id="manageOverlay">
-  <div class="modal" style="max-width:540px;">
-    <div class="modal-head">
-      <h3>题库管理</h3>
-      <div class="sub"><span id="manageCount">0</span> 道题目 · x 表示空格</div>
-    </div>
-    <div class="modal-body">
-      <div class="qlist" id="manageList"></div>
-      <button class="manage-add" id="addQuestionBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增题目</button>
-      <div class="util-row">
-        <button id="exportBtn">导出</button>
-        <button id="importBtn">导入</button>
-        <button id="resetDefaultBtn" class="warn">恢复默认</button>
+  <!-- 占位符键盘（自定义，不唤起系统输入法） -->
+  <div class="overlay" id="keypadOverlay">
+    <div class="keypad-sheet">
+      <div class="keypad-head">
+        <div class="lbl">填入数值</div>
+        <div class="disp empty" id="keypadDisplay">—</div>
+      </div>
+      <div class="keypad-grid">
+        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button class="fn" data-k="东">东</button>
+        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button class="fn" data-k="南">南</button>
+        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button class="fn" data-k="西">西</button>
+        <button class="fn" data-k="sign">+/−</button><button data-k="0">0</button><button class="fn" data-k="dot">.</button><button class="fn" data-k="北">北</button>
+        <button class="fn" data-k="偏" style="grid-column: span 2;">偏</button><button class="fn" data-k="°" style="grid-column: span 2;">°</button>
+      </div>
+      <div class="keypad-foot">
+        <button class="cancel" id="keypadClear">清空</button>
+        <button class="cancel" id="keypadBack">退格</button>
+        <button class="confirm" id="keypadConfirm">完成</button>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="confirm" id="manageCloseBtn" style="width:100%">关闭</button>
+  </div>
+
+  <!-- 编辑 / 新增题目 -->
+  <div class="overlay" id="editOverlay">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="editTitle">编辑题目</h3>
+        <div class="sub" id="editSub">用 x 标记可填空的位置</div>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>题目文本</label>
+          <textarea id="editText" rows="3" placeholder="例：飞往 x 的高度为 x 米"></textarea>
+          <div class="field-hint" id="editHint">识别到 0 处空格</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="cancel" id="editCancel">取消</button>
+        <button class="confirm" id="editConfirm">保存</button>
+      </div>
     </div>
   </div>
+
+  <!-- 题库管理 -->
+  <div class="overlay" id="manageOverlay">
+    <div class="modal" style="max-width:540px;">
+      <div class="modal-head">
+        <h3>题库管理</h3>
+        <div class="sub"><span id="manageCount">0</span> 道题目 · x 表示空格</div>
+      </div>
+      <div class="modal-body">
+        <div class="qlist" id="manageList"></div>
+        <button class="manage-add" id="addQuestionBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增题目</button>
+        <div class="util-row">
+          <button id="exportBtn">导出</button>
+          <button id="importBtn">导入</button>
+          <button id="resetDefaultBtn" class="warn">恢复默认</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="confirm" id="manageCloseBtn" style="width:100%">关闭</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -504,10 +541,11 @@
     pause:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>',
     trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
     rotate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3v6h-6"/><path d="M3 21v-6h6"/><path d="M3.5 9A9 9 0 0 1 20 6.3"/><path d="M20.5 15A9 9 0 0 1 4 17.7"/></svg>',
+    clean: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7l-.8 11.5c-.1.9-.9 1.5-1.7 1.5H7.5c-.8 0-1.6-.6-1.7-1.5L5 7M3 7h18M8 7V4c0-.6.4-1 1-1h6c.6 0 1 .4 1 1v3"/></svg>'
   };
   document.getElementById('editCurrentBtn').innerHTML = ICONS.edit;
   document.getElementById('manageBankBtn').innerHTML = ICONS.list;
-  document.getElementById('resetFieldsBtn').innerHTML = ICONS.reset;
+  document.getElementById('resetFieldsBtn').innerHTML = ICONS.clean;
   document.getElementById('timerReset').innerHTML = ICONS.reset;
   document.getElementById('orientationBtn').innerHTML = ICONS.rotate;
 
@@ -543,6 +581,7 @@
   let currentId = null;
   let blankValues = {};      // key `${qid}#${idx}` -> string
   let fontSize = 21;
+  let timerLimit = 60;       // 用户自定义的计时总时长限制
   let timerSeconds = 60;
   let timerRunning = false;
   let timerHandle = null;
@@ -637,6 +676,12 @@
     if (savedFontSize) {
       fontSize = parseInt(savedFontSize, 10);
     }
+    // 载入倒计时时长
+    const savedTimerLimit = localStorage.getItem('timerLimit_v3');
+    if (savedTimerLimit) {
+      timerLimit = parseInt(savedTimerLimit, 10);
+      timerSeconds = timerLimit;
+    }
     // 载入填空数据
     const savedBlankValues = localStorage.getItem('blankValues_v3');
     if (savedBlankValues) {
@@ -650,6 +695,7 @@
   
   function savePersistedState() {
     localStorage.setItem('fontSize_v3', fontSize);
+    localStorage.setItem('timerLimit_v3', timerLimit);
     localStorage.setItem('blankValues_v3', JSON.stringify(blankValues));
   }
 
@@ -736,6 +782,14 @@
     keypadBuffer = blankValues[activeBlankKey] || '';
     activeTimerEditing = false;
     $('#keypadOverlay .lbl').textContent = '填入数值';
+    
+    // 填空模式：显示4列，含东西南北符号，移除并隐藏 timer-mode 样式，显示相应按钮
+    const grid = $('.keypad-grid');
+    grid.classList.remove('timer-mode');
+    grid.querySelectorAll('button[data-k="东"], button[data-k="南"], button[data-k="西"], button[data-k="北"], button[data-k="偏"], button[data-k="°"], button[data-k="sign"]').forEach(function(btn){
+      btn.style.display = '';
+    });
+    
     renderKeypad();
     keypadOverlay.classList.add('show');
   });
@@ -745,8 +799,16 @@
     if (timerRunning) return;
     activeBlankKey = null;
     activeTimerEditing = true;
-    keypadBuffer = String(timerSeconds);
+    keypadBuffer = String(timerLimit);
     $('#keypadOverlay .lbl').textContent = '设置倒计时秒数';
+    
+    // 计时器模式：只保留 1-9, 0, 退格等，隐藏汉字及符号
+    const grid = $('.keypad-grid');
+    grid.classList.add('timer-mode');
+    grid.querySelectorAll('button[data-k="东"], button[data-k="南"], button[data-k="西"], button[data-k="北"], button[data-k="偏"], button[data-k="°"], button[data-k="sign"]').forEach(function(btn){
+      btn.style.display = 'none';
+    });
+    
     renderKeypad();
     keypadOverlay.classList.add('show');
   });
@@ -761,15 +823,18 @@
     }
   }
 
-  document.querySelectorAll('.keypad-grid button').forEach(btn=>{
+  document.querySelectorAll('.keypad-grid button').forEach(function(btn){
     btn.addEventListener('click', function(){
-      const k = this.dataset.k;
+      var k = this.getAttribute('data-k');
       if (k === 'sign'){
         if (keypadBuffer.startsWith('-')) keypadBuffer = keypadBuffer.slice(1);
         else keypadBuffer = '-' + keypadBuffer;
       } else if (k === 'dot'){
         if (!keypadBuffer.includes('.')) keypadBuffer += (keypadBuffer===''?'0.':'.');
       } else {
+        if (activeTimerEditing && ['东', '南', '西', '北', '偏', '°', 'sign'].includes(k)) {
+          return;
+        }
         keypadBuffer += k;
       }
       renderKeypad();
@@ -792,7 +857,9 @@
     } else if (activeTimerEditing) {
       const val = parseInt(keypadBuffer, 10);
       if (!isNaN(val) && val > 0) {
+        timerLimit = val;
         timerSeconds = val;
+        savePersistedState(); // 保存自定义倒计时
         paintTimer();
       }
       closeKeypad();
@@ -1164,7 +1231,7 @@
   }
   function startTimer(){
     if (timerRunning) return;
-    if (timerSeconds <= 0) timerSeconds = 60;
+    if (timerSeconds <= 0) timerSeconds = timerLimit;
     // 初始化 AudioContext 避免浏览器安全策略限制无法播放
     try {
       if (!audioCtx) {
@@ -1184,21 +1251,40 @@
     paintTimer();
   }
   timerToggle.addEventListener('click', function(){ timerRunning ? stopTimer() : startTimer(); });
-  timerReset.addEventListener('click', function(){ stopTimer(); timerSeconds = 60; paintTimer(); });
-  alarmCloseBtn.addEventListener('click', function(){ alarmOverlay.classList.remove('show'); });
+  timerReset.addEventListener('click', function(){ stopTimer(); timerSeconds = timerLimit; paintTimer(); });
+  alarmCloseBtn.addEventListener('click', function(){ 
+    alarmOverlay.classList.remove('show'); 
+    stopTimer(); 
+    timerSeconds = timerLimit; 
+    paintTimer(); 
+  });
 
   /* ---------------- orientation ---------------- */
   let landscapeLocked = false;
   orientationBtn.addEventListener('click', function(){
-    if (!screen.orientation || !screen.orientation.lock){
-      alert('当前浏览器不支持方向锁定，请手动旋转设备');
-      return;
+    landscapeLocked = !landscapeLocked;
+    // 优先尝试锁定屏幕方向 API
+    if (screen.orientation && screen.orientation.lock) {
+      const target = landscapeLocked ? 'landscape' : 'portrait';
+      screen.orientation.lock(target).then(function(){
+        // 锁定成功
+      }).catch(function(){
+        // 锁定失败或用户代理拒绝，回退到 CSS 物理旋转
+        toggleCssRotate();
+      });
+    } else {
+      // 浏览器不支持 lock API (如桌面端或 iOS)，使用 CSS 旋转回退方案
+      toggleCssRotate();
     }
-    const target = landscapeLocked ? 'portrait' : 'landscape';
-    screen.orientation.lock(target).then(function(){
-      landscapeLocked = !landscapeLocked;
-    }).catch(function(){ /* silently ignore unsupported lock */ });
   });
+
+  function toggleCssRotate() {
+    if (landscapeLocked) {
+      document.body.classList.add('force-landscape');
+    } else {
+      document.body.classList.remove('force-landscape');
+    }
+  }
 
   /* ---------------- main actions ---------------- */
   randomBtn.addEventListener('click', function(){
