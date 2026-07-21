@@ -71,19 +71,26 @@
     background-position:0 4px;
   }
   .question-text{
-    font-family:var(--font-serif);line-height:1.9;font-weight:400;color:var(--ink);
+    font-family:var(--font-serif);line-height:1.9;font-weight:700;color:var(--ink);
     text-align:center;width:100%;max-width:96%;letter-spacing:.2px;
     font-size:var(--font-base);word-break:break-word;
+    padding-bottom:18px;
+    border-bottom:2px solid var(--paper-line);
   }
   .blank{
-    display:inline-block;min-width:2.2em;padding:0 5px;margin:0 2px;
-    border-bottom:2px solid var(--ink-faint);color:var(--ink-faint);
-    font-family:var(--font-mono);font-size:.88em;cursor:pointer;transition:.15s ease;
-    text-align:center;line-height:1.5;
+    display:inline;
+    padding:0 2px;
+    margin:0 1px;
+    border-bottom: 2.5px dashed var(--ink-faint);
+    color:var(--ink-faint);
+    font-family:var(--font-mono);
+    font-size:1.05em;
+    cursor:pointer;
+    transition:.15s ease;
   }
-  .blank.filled{border-bottom-color:var(--accent);color:var(--accent);font-weight:700;}
+  .blank.filled{border-bottom: 2.5px dashed var(--accent);color:var(--accent);font-weight:700;}
   .blank:active{opacity:.55;}
-  .blank.empty::before{content:'\2013\2013';letter-spacing:1px;}
+  .blank.empty::before{content:'\00a0\00a0\00a0\00a0';letter-spacing:1px;}
 
   .card-empty{font-family:var(--font-serif);font-size:16px;color:var(--ink-faint);text-align:center;}
 
@@ -173,16 +180,16 @@
   .keypad-head .lbl{font-family:var(--font-ui);font-size:12px;color:var(--ink-soft);letter-spacing:.5px;}
   .keypad-head .disp{font-family:var(--font-mono);font-size:30px;font-weight:700;color:var(--ink);min-height:40px;letter-spacing:1px;}
   .keypad-head .disp.empty{color:var(--ink-faint);}
-  .keypad-grid{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--paper-line);}
+  .keypad-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    background:var(--paper-line);gap:1px;border-top:1px solid var(--paper-line);
+  }
   .keypad-grid.timer-mode {grid-template-columns:repeat(3,1fr);}
   .keypad-grid button{
-    border:none;border-right:1px solid var(--paper-line);border-bottom:1px solid var(--paper-line);
+    border:none;
     background:var(--card);height:48px;font-family:var(--font-mono);font-size:18px;font-weight:600;color:var(--ink);
     cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;
   }
-  .keypad-grid button:nth-child(4n){border-right:none;}
-  .keypad-grid.timer-mode button:nth-child(4n){border-right:1px solid var(--paper-line);}
-  .keypad-grid.timer-mode button:nth-child(3n){border-right:none;}
   .keypad-grid button:active{background:var(--accent-soft);}
   .keypad-grid button.fn{color:var(--accent);font-size:15px;background:var(--accent-soft);}
   .keypad-grid button.fn:active{opacity:0.8;}
@@ -316,6 +323,8 @@
   body.timer-running .question-text .blank {
     pointer-events: none;
   }
+
+
 
   /* 动效支持 */
   .bar-btn, .icon-btn, .keypad-grid button, .keypad-foot button, .modal-foot button, .manage-add, .dot {
@@ -551,23 +560,22 @@
 
   /* ---------------- default bank (bare x placeholders, no tags) ---------------- */
   const DEFAULT_QUESTIONS = [
-    { id: 1,  text: '连接飞机起飞执行' },
-    { id: 2,  text: '改高度飞往 x' },
-    { id: 3,  text: '以当前高度飞往 x' },
-    { id: 4,  text: '飞往 x 的高度为 x 米' },
+    { id: 2,  text: '当前点改高度飞往 x 方向 x 米' },
+    { id: 3,  text: '以当前高度飞往 x 方向 x 米' },
+    { id: 4,  text: '飞往点 x 的高度为 x 米' },
     { id: 5,  text: '原地上升或者下降 x 米' },
     { id: 6,  text: '修改所有航点高度为 x 米' },
-    { id: 7,  text: '航线中间增加航点' },
-    { id: 8,  text: '航线之间增加航点距离 x x 米' },
-    { id: 9,  text: '指定航点 x 指定方向 x 和距离 x 增加航点' },
+    { id: 7,  text: '航点x与x中间增加航点x' },
+    { id: 8,  text: '航点 x 与 x 之间增加航点距离 x 点 x 米' },
+    { id: 9,  text: '在指定航点 x x 方向，距离 x m增加航点 x' },
     { id: 10, text: '删除航点 x' },
-    { id: 11, text: '航点平移，移动航点 x 到 x' },
-    { id: 12, text: '以 x 米每秒的速度飞往 x' },
+    { id: 11, text: '航点平移，移动航点 x 到航点 x' },
+    { id: 12, text: '以 x 米每秒的速度飞往航点 x' },
     { id: 13, text: '起飞后直飞 x 号点开始执行' },
-    { id: 14, text: 'x-x 以 x 米每秒运行' },
-    { id: 15, text: '增加航点并保持图形原有形状' },
+    { id: 14, text: '航点 x-x 以 x 米每秒运行' },
+    { id: 15, text: '增加航点x并保持图形原有形状' },
     { id: 16, text: '航线循环 x 次' },
-    { id: 17, text: '修改全局速度飞往 x' },
+    { id: 17, text: '修改全局速度飞往点 x' },
     { id: 18, text: '在 x 号点 x 方向 x 米处增加航点，序号为 x 号点，完成后执行航线（x 分钟）' },
     { id: 19, text: '把 x 号点平移到 x 号点上' },
   ];
@@ -1166,31 +1174,57 @@
   /* ---------------- timer ---------------- */
   // Web Audio Context 用于生成蜂鸣器提示音
   let audioCtx = null;
+  let alarmSoundInterval = null; // 循环播放句柄
+  let alarmAudioCtx = null;      // 报警专用 AudioContext，关闭时立刻静音
+
   function playAlarmSound() {
     try {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      // 每次播放前创建全新的 AudioContext，便于 close() 立刻静音
+      if (alarmAudioCtx) { try { alarmAudioCtx.close(); } catch(e){} }
+      alarmAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // 4声在0.7秒内（间隔约0.175s），每声持续约0.13s
+      function playOnce() {
+        if (!alarmAudioCtx) return;
+        const t0 = alarmAudioCtx.currentTime;
+        // 4声，每声间隔0.1s，每声持续0.07s，共0.4秒，0.2秒静默后重复
+        [0, 0.1, 0.2, 0.3].forEach((delay) => {
+          const osc = alarmAudioCtx.createOscillator();
+          const gain = alarmAudioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1046, t0 + delay);
+
+          gain.gain.setValueAtTime(0, t0 + delay);
+          gain.gain.linearRampToValueAtTime(1.0, t0 + delay + 0.008); // 快速起音
+          gain.gain.setValueAtTime(1.0, t0 + delay + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, t0 + delay + 0.09); // 平滑收尾
+
+          osc.connect(gain);
+          gain.connect(alarmAudioCtx.destination);
+
+          osc.start(t0 + delay);
+          osc.stop(t0 + delay + 0.09);
+        });
       }
-      // 播放一个三声递增的蜂鸣提醒音
-      const times = [0, 0.25, 0.5];
-      times.forEach((delay) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime + delay); // A5 音高
-        
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.2);
-        
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + 0.2);
-      });
+
+      playOnce();
+      // 4声×0.1s + 0.2s静默 = 每1.2秒重复一轮
+      alarmSoundInterval = setInterval(playOnce, 1200);
     } catch (e) {
       console.error('播放音频失败:', e);
+    }
+  }
+
+  function stopAlarmSound() {
+    if (alarmSoundInterval) {
+      clearInterval(alarmSoundInterval);
+      alarmSoundInterval = null;
+    }
+    // 关闭 AudioContext 立刻终止所有正在播放的节点
+    if (alarmAudioCtx) {
+      try { alarmAudioCtx.close(); } catch(e){}
+      alarmAudioCtx = null;
     }
   }
 
@@ -1253,7 +1287,8 @@
   timerToggle.addEventListener('click', function(){ timerRunning ? stopTimer() : startTimer(); });
   timerReset.addEventListener('click', function(){ stopTimer(); timerSeconds = timerLimit; paintTimer(); });
   alarmCloseBtn.addEventListener('click', function(){ 
-    alarmOverlay.classList.remove('show'); 
+    alarmOverlay.classList.remove('show');
+    stopAlarmSound();
     stopTimer(); 
     timerSeconds = timerLimit; 
     paintTimer(); 
@@ -1314,6 +1349,13 @@
   loadPersistedState(); // 初始化载入字号和填空数据
   setFont(fontSize);
   paintTimer();
+  
+  // 页面刷新时随机抽选一题（如果有题目）
+  if (bank.length > 0) {
+    const pick = bank[Math.floor(Math.random() * bank.length)];
+    currentId = pick.id;
+  }
+  
   refreshAll();
 })();
 </script>
